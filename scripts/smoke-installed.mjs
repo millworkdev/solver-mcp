@@ -15,6 +15,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { compareToolSurface } from "./tool-surface.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workDirectory = mkdtempSync(join(tmpdir(), "solver-mcp-smoke-"));
@@ -107,14 +108,14 @@ try {
   if (toolsResponse.error) fail(`tools/list failed: ${JSON.stringify(toolsResponse.error)}`);
 
   const tools = toolsResponse.result.tools;
-  if (tools.length !== 18) fail(`expected exactly 18 tools, got ${tools.length}`);
+  const surfaceFindings = compareToolSurface(tools.map((tool) => tool.name));
+  if (surfaceFindings.length > 0) fail(`tool surface drifted from the pinned 18-name set: ${surfaceFindings.join("; ")}`);
   for (const tool of tools) {
-    if (!tool.name.startsWith("solver_")) fail(`tool outside the solver_ namespace: ${tool.name}`);
     const wording = `${tool.name} ${tool.description ?? ""}`;
     if (supersededJargon.test(wording)) fail(`tool ${tool.name} emits superseded jargon`);
     if (internalProductName.test(wording)) fail(`tool ${tool.name} emits the internal product name`);
   }
-  process.stdout.write(`installed smoke ok (help, initialize, ${tools.length} tools, public wording)\n`);
+  process.stdout.write(`installed smoke ok (help, initialize, exact ${tools.length}-tool pinned surface, public wording)\n`);
 } catch (error) {
   fail(error.message);
 } finally {

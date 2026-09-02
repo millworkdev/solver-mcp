@@ -58,7 +58,10 @@ jobs:
       - name: Check the packed file set and manifest truth
         run: node scripts/check-packed-files.mjs
 
-      - name: Smoke-test the installed artifact (help, stdio, 18 tools)
+      - name: Exercise tool-surface drift negatives
+        run: node scripts/test-tool-surface.mjs
+
+      - name: Smoke-test the installed artifact (help, stdio, exact pinned 18-tool surface)
         run: node scripts/smoke-installed.mjs
 
   publish-guard:

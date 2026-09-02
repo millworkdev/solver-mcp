@@ -19,7 +19,11 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// An explicit root argument lets the negative-fixture tests point this exact
+// scanner at synthetic trees; without one it scans this repository.
+const repositoryRoot = process.argv[2]
+  ? resolve(process.argv[2])
+  : resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 
 function listFiles(directory) {
@@ -59,6 +63,12 @@ const forbiddenPatterns = [
   { id: "agent-instruction-file", pattern: new RegExp(`\\b${agentFileWord}\\b`) },
   { id: "internal-product-name", pattern: new RegExp(`\\b${internalProductWord}\\b`) },
   { id: "superseded-jargon", pattern: new RegExp(jargonWord) },
+  // Internal operational references: change/issue/ticket numbers and
+  // planning row identifiers. URLs are stripped before this scan, so a
+  // legitimate public support link never reaches these patterns.
+  { id: "internal-change-reference", pattern: /\b(?:PR|MR|issue|ticket) ?#[0-9]+\b/i },
+  { id: "internal-row-reference", pattern: /\brow [A-Z]{1,3}[0-9]+\b/i },
+  { id: "launch-reference", pattern: new RegExp(`\\b${["inter", "nal"].join("")}[- ]launch\\b`, "i") },
   { id: "absolute-path", pattern: /(?:^|["'\s(=])\/(?:Users|home|private\/tmp|var\/folders)\// },
   { id: "secret-material", pattern: new RegExp(["-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----", "\\bnpm_[A-Za-z0-9]{20,}\\b", "\\bgh[pousr]_[A-Za-z0-9_]{20,}\\b", "\\bgithub_" + "pat_[A-Za-z0-9_]{20,}\\b", "\\bAKIA[0-9A-Z]{16}\\b"].join("|")) },
 ];

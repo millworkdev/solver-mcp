@@ -47,6 +47,7 @@ const allowedUrlPatterns = [
   /^https:\/\/registry\.npmjs\.org(?:\/|$)/,
   /^https?:\/\/(?:www\.)?apache\.org\//,
   /^https:\/\/api\.getmillwork\.dev\//,
+  /^https:\/\/docs\.getmillwork\.dev(?:\/|$)/,
   /^https?:\/\/docs\.npmjs\.com\//,
   /^https:\/\/github\.com\/rhysd\/actionlint\//,
   /^https:\/\/claude\.com\/claude-code\b/,

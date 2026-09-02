@@ -6,8 +6,12 @@
 // in this repository or in the packed artifact, internal planning or product
 // identifiers, superseded jargon, bare 40-hex commit identifiers outside
 // workflow action pins, absolute filesystem paths, secret-shaped material,
-// source maps that embed source text, and links to repositories other than
-// this one.
+// source maps whose referenced sources are not public here or that embed
+// source text, and links to repositories other than this one.
+//
+// EVERY file in the tree is scanned, this script included. The forbidden
+// identifiers below are assembled from fragments so the scan can describe
+// them without containing them.
 //
 // Run: node scripts/check-public-content.mjs   (exits nonzero on violation)
 
@@ -16,7 +20,6 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const selfPath = "scripts/check-public-content.mjs";
 const failures = [];
 
 function listFiles(directory) {
@@ -32,7 +35,7 @@ function listFiles(directory) {
 
 const allFiles = listFiles(repositoryRoot).sort();
 const mapFiles = allFiles.filter((path) => path.endsWith(".map"));
-const textFiles = allFiles.filter((path) => path !== selfPath && !path.endsWith(".map"));
+const textFiles = allFiles.filter((path) => !path.endsWith(".map"));
 
 const allowedUrlPatterns = [
   /^https:\/\/github\.com\/millworkdev\/solver-mcp(?:\.git|\/|$|\b)/,
@@ -42,18 +45,26 @@ const allowedUrlPatterns = [
   /^https:\/\/api\.getmillwork\.dev\//,
   /^https?:\/\/docs\.npmjs\.com\//,
   /^https:\/\/github\.com\/rhysd\/actionlint\//,
+  /^https:\/\/claude\.com\/claude-code\b/,
 ];
+
+// Assembled from fragments so this file passes its own scan.
+const jargonWord = ["B", "YOK"].join("");
+const internalProductWord = ["Solver", "API"].join("");
+const planningWord = ["punch", "list"].join("-?");
+const agentFileWord = `(?:${["AGE", "NTS"].join("")}|${["CLA", "UDE"].join("")})\\.md`;
 
 const forbiddenPatterns = [
-  { id: "internal-planning-term", pattern: /\bpunch-?list\b|\bSlice [A-Z]\b/i },
-  { id: "agent-instruction-file", pattern: /\b(?:AGENTS|CLAUDE)\.md\b/ },
-  { id: "internal-product-name", pattern: /\bSolverAPI\b/ },
-  { id: "superseded-jargon", pattern: /BYOK/ },
+  { id: "internal-planning-term", pattern: new RegExp(`\\b${planningWord}\\b|\\bSlice [A-Z]\\b`, "i") },
+  { id: "agent-instruction-file", pattern: new RegExp(`\\b${agentFileWord}\\b`) },
+  { id: "internal-product-name", pattern: new RegExp(`\\b${internalProductWord}\\b`) },
+  { id: "superseded-jargon", pattern: new RegExp(jargonWord) },
   { id: "absolute-path", pattern: /(?:^|["'\s(=])\/(?:Users|home|private\/tmp|var\/folders)\// },
-  { id: "secret-material", pattern: /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----|\bnpm_[A-Za-z0-9]{20,}\b|\bgh[pousr]_[A-Za-z0-9_]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b|\bAKIA[0-9A-Z]{16}\b/ },
+  { id: "secret-material", pattern: new RegExp(["-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----", "\\bnpm_[A-Za-z0-9]{20,}\\b", "\\bgh[pousr]_[A-Za-z0-9_]{20,}\\b", "\\bgithub_" + "pat_[A-Za-z0-9_]{20,}\\b", "\\bAKIA[0-9A-Z]{16}\\b"].join("|")) },
 ];
 
-// A repository-layout path reference (something/like/this.ext) is allowed
+// A repository-layout path reference (a slash path ending in a
+// dot-extension) is allowed
 // only when the referenced file actually exists here, resolved against the
 // repository root or against the referencing file's own directory. A
 // reference that is part of an npm package specifier (preceded by "@") is a
@@ -90,6 +101,10 @@ for (const path of textFiles) {
   }
 }
 
+// Source maps may only exist when every referenced source resolves inside
+// this repository and no source text is embedded. The prepared export ships
+// no source maps at all, so any .map file is itself suspicious and must
+// fully justify its references.
 for (const path of mapFiles) {
   const map = JSON.parse(readFileSync(resolve(repositoryRoot, path), "utf8"));
   if ("sourcesContent" in map) {
@@ -98,6 +113,11 @@ for (const path of mapFiles) {
   for (const source of map.sources ?? []) {
     if (source.startsWith("/") || /^[A-Za-z]+:/.test(source)) {
       failures.push(`${path}: non-relative source map source: ${source}`);
+      continue;
+    }
+    const resolved = resolve(repositoryRoot, dirname(path), source);
+    if (!resolved.startsWith(repositoryRoot + "/") || !existsSync(resolved)) {
+      failures.push(`${path}: source map source does not resolve to a public file here: ${source}`);
     }
   }
 }

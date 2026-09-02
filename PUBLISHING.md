@@ -60,7 +60,7 @@ Every pull request and push to `main` runs
   18-name tool surface pinned in `scripts/expected-tool-surface.json` with
   public wording; `scripts/test-tool-surface.mjs` proves the comparison
   catches renames, additions, removals, and duplicates;
-- `scripts/test-publish-preconditions.sh` — fifteen negative cases for the
+- `scripts/test-publish-preconditions.sh` — 16 negative cases for the
   publish guard, including mixed registry output that embeds a cached E404
   inside another failure, a failing token inspection, a literal npmrc
   token, a wrong or default dist-tag, and an expected-version mismatch.

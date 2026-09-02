@@ -50,6 +50,8 @@ const launchReference = ["internal", "-launch"].join("");
 const productReference = ["Solver", "API"].join("");
 const jargonReference = ["B", "YOK"].join("");
 const foreignUrl = ["https:", "//example", ".com/internal"].join("");
+const docsUrl = ["https:", "//docs.getmillwork.dev"].join("");
+const docsLookalikeUrl = ["https:", "//docs.getmillwork.dev", ".evil/help"].join("");
 const nonpublicPath = ["docs/", "internal-notes", ".md"].join("");
 
 runCase("change-reference-rejects", "comment.js", `// works against the ${changeReference} backend\n`, "rejects", "internal-change-reference");
@@ -61,10 +63,17 @@ runCase("product-name-rejects", "readme.md", `Powered by ${productReference}.\n`
 runCase("jargon-rejects", "tool.js", `// ${jargonReference}-only by construction\n`, "rejects", "superseded-jargon");
 runCase("nonpublic-path-rejects", "guide.md", `See ${nonpublicPath} for details.\n`, "rejects", "not public here");
 runCase("foreign-url-rejects", "links.md", `See ${foreignUrl} for details.\n`, "rejects", "URL outside the allowed public set");
+runCase("docs-lookalike-url-rejects", "links.md", `See ${docsLookalikeUrl} for details.\n`, "rejects", "URL outside the allowed public set");
 runCase(
   "support-link-accepts",
   "support.md",
   "Report problems at https://github.com/millworkdev/solver-mcp/issues — include the tool name and versions.\n",
+  "accepts",
+);
+runCase(
+  "documentation-link-accepts",
+  "support.md",
+  `Read the public documentation: ${docsUrl}\n`,
   "accepts",
 );
 runCase(
@@ -79,4 +88,4 @@ if (failures.length > 0) {
   process.stderr.write(failures.map((failure) => `FAIL ${failure}`).join("\n") + "\n");
   process.exit(1);
 }
-process.stdout.write("public-content negative fixtures ok (11 cases)\n");
+process.stdout.write("public-content negative fixtures ok (13 cases)\n");

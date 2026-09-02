@@ -66,8 +66,26 @@ mkdir -p "${userconfig_home}"
 printf '//registry.npmjs.org/:_authToken=realNpmAdversarialFixture\n' > "${userconfig_home}/custom-npmrc"
 run_case "userconfig-token-refuses" refuses "${userconfig_home}" NPM_CONFIG_USERCONFIG="${userconfig_home}/custom-npmrc"
 
+# The reproduced bypass: an npmrc auth entry referencing a NON-standard
+# environment variable that is populated is a real credential and must
+# refuse -- the reference is only inert while its variable is unset.
+alt_reference_home="${work_directory}/alt-env-reference"
+mkdir -p "${alt_reference_home}"
+printf '//registry.npmjs.org/:_authToken=${ALT_AUTH_TOKEN}\n' > "${alt_reference_home}/.npmrc"
+run_case "populated-alt-env-reference-refuses" refuses "${alt_reference_home}" ALT_AUTH_TOKEN=realNpmAdversarialFixture
+
+unbraced_reference_home="${work_directory}/unbraced-env-reference"
+mkdir -p "${unbraced_reference_home}"
+printf '//registry.npmjs.org/:_authToken=$ALT_AUTH_TOKEN\n' > "${unbraced_reference_home}/.npmrc"
+run_case "populated-unbraced-reference-refuses" refuses "${unbraced_reference_home}" ALT_AUTH_TOKEN=realNpmAdversarialFixture
+
+unset_alt_home="${work_directory}/unset-alt-reference"
+mkdir -p "${unset_alt_home}"
+printf '//registry.npmjs.org/:_authToken=${ALT_AUTH_TOKEN}\n' > "${unset_alt_home}/.npmrc"
+run_case "unset-alt-env-reference-passes" passes "${unset_alt_home}"
+
 if [ "${failures}" -gt 0 ]; then
   echo "${failures} real-npm credential case(s) failed"
   exit 1
 fi
-echo "real-npm credential inspection ok (5 cases, npm ${npm_version})"
+echo "real-npm credential inspection ok (8 cases, npm ${npm_version})"

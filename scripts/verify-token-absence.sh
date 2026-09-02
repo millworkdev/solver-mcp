@@ -13,11 +13,12 @@
 #   2. `npm whoami` succeeding proves a usable credential and refuses
 #      (its failure proves nothing and defers to the file scan);
 #   3. every applicable npm configuration file (project, user, global) is
-#      scanned for a literal auth entry; an unreadable file or an
-#      undiscoverable global-config path refuses. An unresolved
-#      environment-reference placeholder (a value starting with "$") is
-#      the inert line setup-node writes and is covered by the environment
-#      checks above.
+#      scanned for auth entries. A literal value refuses. An
+#      environment-reference value (the line setup-node writes) is
+#      resolved generically: it is inert only while the referenced
+#      variable is unset or empty -- a populated referenced variable is a
+#      real credential and refuses, whatever the variable is named. Any
+#      other unrecognized value form refuses.
 #
 # This script performs no mutation of any kind.
 set -euo pipefail
@@ -52,10 +53,33 @@ for npmrc_path in ./.npmrc "${NPM_CONFIG_USERCONFIG:-${HOME}/.npmrc}" "${globalc
     echo "::error::npm config file ${npmrc_path} exists but is unreadable; refusing rather than concealing a token." >&2
     exit 1
   fi
-  if grep -Eq '(_authToken|_auth)[[:space:]]*=[[:space:]]*[^[:space:]$]' "${npmrc_path}"; then
-    echo "::error::${npmrc_path} carries a literal npm auth entry; trusted publishing must be token-free." >&2
-    exit 1
-  fi
+  while IFS= read -r auth_entry_value; do
+    if [ -z "${auth_entry_value}" ]; then
+      continue
+    fi
+    referenced_variable=""
+    case "${auth_entry_value}" in
+      '${'*'}')
+        referenced_variable="${auth_entry_value#'${'}"
+        referenced_variable="${referenced_variable%'}'}"
+        ;;
+      '$'*)
+        referenced_variable="${auth_entry_value#'$'}"
+        ;;
+      *)
+        echo "::error::${npmrc_path} carries a literal npm auth entry; trusted publishing must be token-free." >&2
+        exit 1
+        ;;
+    esac
+    if ! printf '%s' "${referenced_variable}" | grep -Eq '^[A-Za-z_][A-Za-z0-9_]*$'; then
+      echo "::error::${npmrc_path} carries an npm auth entry with an unrecognized value form; refusing rather than concealing a token." >&2
+      exit 1
+    fi
+    if [ -n "$(printenv "${referenced_variable}" || true)" ]; then
+      echo "::error::${npmrc_path} references environment variable ${referenced_variable} in an npm auth entry and that variable is populated; trusted publishing must be token-free." >&2
+      exit 1
+    fi
+  done < <(grep -E '(_authToken|_auth)[[:space:]]*=' "${npmrc_path}" | sed -E 's/^[^=]*=[[:space:]]*//; s/[[:space:]]+$//')
 done
 
 echo "npm credential inspection clean (environment, whoami, config files)."

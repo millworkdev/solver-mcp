@@ -1,0 +1,88 @@
+# Pinned trusted-publishing workflow for @millwork/solver-mcp (row M5,
+# matt783/solverAPI#487, trusted-publishing-procedure.v1).
+#
+# This repository is the purpose-built public publishing repository; the
+# canonical source is private. This workflow is the only publish path:
+# operator-dispatched, protected-environment-gated, npm OIDC only (no npm
+# auth token), always `--tag candidate`, never `latest`.
+#
+# Hard refusals baked in below:
+#   - refuses any version that already exists on the registry
+#     (every published version is immutable and never overwritten);
+#   - refuses 0.1.0 specifically: the bootstrap candidate predates this
+#     binding and must never be republished or gain a provenance
+#     attestation;
+#   - refuses to run for any package other than @millwork/solver-mcp.
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: >-
+          Exact version to publish (operator confirmation). Must equal the
+          version in package.json, must not be 0.1.0, and must not already
+          exist on the registry.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    # Allowlisted GitHub-hosted runner per the procedure's toolchain
+    # contract (self-hosted runners are forbidden).
+    runs-on: ubuntu-24.04
+    # Protected environment required by the binding; its protection rules
+    # (operator reviewers) are configured in repository settings, not here.
+    environment: npm-publish
+    permissions:
+      contents: read
+      # OIDC token for npm trusted publishing; provenance comes from this
+      # identity, not from any npm auth token.
+      id-token: write
+
+    steps:
+      - name: Check out the curated export at the dispatched ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Pin the npm CLI to the trusted-publishing minimum
+        run: |
+          npm install -g npm@11.5.1
+          npm --version
+
+      - name: Refuse anything but a new immutable candidate of this package
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PACKAGE_NAME" != "@millwork/solver-mcp" ]; then
+            echo "Refusing: this workflow publishes only @millwork/solver-mcp, got $PACKAGE_NAME" >&2
+            exit 1
+          fi
+          if [ "$PACKAGE_VERSION" != "${{ inputs.expected_version }}" ]; then
+            echo "Refusing: package.json version $PACKAGE_VERSION does not equal the dispatched expected_version ${{ inputs.expected_version }}" >&2
+            exit 1
+          fi
+          if [ "$PACKAGE_VERSION" = "0.1.0" ]; then
+            echo "Refusing: 0.1.0 is the immutable bootstrap candidate; it is never republished and never gains provenance" >&2
+            exit 1
+          fi
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "Refusing: $PACKAGE_NAME@$PACKAGE_VERSION already exists on the registry; published versions are immutable" >&2
+            exit 1
+          fi
+
+      - name: Publish the candidate via npm trusted publishing (OIDC)
+        # --tag candidate keeps `latest` untouched; provenance is generated
+        # automatically from the trusted-publishing OIDC identity.
+        run: npm publish --access public --tag candidate --provenance

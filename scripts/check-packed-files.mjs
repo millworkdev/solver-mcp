@@ -12,11 +12,13 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 
+// Source maps are deliberately not shipped: their referenced sources are
+// not public here. The allowlist therefore has no .map entries.
 const distFiles = [
   "errors", "httpClient", "index", "server", "toolDefinition", "types",
   "tools/arms", "tools/executions", "tools/modelSources", "tools/proposals",
   "tools/receipts", "tools/registry",
-].flatMap((base) => [`dist/${base}.js`, `dist/${base}.js.map`, `dist/${base}.d.ts`]);
+].flatMap((base) => [`dist/${base}.js`, `dist/${base}.d.ts`]);
 const allowedPackedFiles = ["LICENSE", "README.md", "package.json", ...distFiles].sort();
 
 const packOutput = JSON.parse(execFileSync(

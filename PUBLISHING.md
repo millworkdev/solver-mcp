@@ -27,7 +27,12 @@ the published, immutable `@millwork/solver-mcp@0.1.0` registry artifact:
 
 Derivation and review evidence are retained privately, and before any
 publish the exported `dist/` is re-verified against a rebuild from the
-canonical source at its current head. `files: ["dist"]`
+canonical source at its current head. The transformation itself is a
+committed, deterministic recipe on the canonical side; its output identity
+is committed here as `export-manifest.json` (per-file SHA-256s plus an
+aggregate digest with its formula stated in the manifest), and
+`scripts/check-export-manifest.mjs` re-verifies every byte of `dist/`
+against it deterministically. `files: ["dist"]`
 keeps repository-only files (this document, `scripts/`, `.github/`) out of
 every packed artifact; npm always includes
 `package.json`, `README.md`, and `LICENSE`.
@@ -38,9 +43,13 @@ Every pull request and push to `main` runs
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
 
 - `scripts/check-public-content.mjs` — deterministic public-content rules
-  over every file in the working tree, this gate included (commit messages
-  and pull-request narratives are outside any file gate's reach and are
-  covered by review, not by this scan);
+  over every file in the working tree, this gate included, with internal
+  change/row/launch reference classes rejected; `scripts/test-public-content.mjs`
+  proves each rejection class and the public-support-link acceptance against
+  synthetic trees (commit messages and pull-request narratives are outside
+  any file gate's reach and are covered by review, not by this scan);
+- `scripts/check-export-manifest.mjs` — every byte of `dist/` re-verified
+  against the committed export manifest and its aggregate digest;
 - actionlint (pinned, checksum-verified) over the workflows;
 - `scripts/check-packed-files.mjs` — the packed file set must equal the
   exact allowlist, and the manifest must tell the truth about this

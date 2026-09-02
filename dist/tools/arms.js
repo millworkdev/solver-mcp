@@ -1,6 +1,6 @@
 import { assertRequiredPresent } from "../toolDefinition.js";
 /**
- * The two arm tools that are fully functional today against the PR #32
+ * The two arm tools that are fully functional today against the live
  * backend (arms CRUD is live). Both map 1:1 to a the product contract §3
  * endpoint and are thin passthroughs -- no shaping beyond what the API
  * returns, per the server documentation's "no hidden logic" rule.

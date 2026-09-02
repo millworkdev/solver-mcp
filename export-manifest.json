@@ -1,0 +1,109 @@
+{
+  "manifest_id": "millwork.solver-mcp.public-export-manifest.v1",
+  "transformation": [
+    "exclude *.map",
+    "strip map-reference comment lines from *.js",
+    "apply the private export recipe's single-line replacement table in order"
+  ],
+  "aggregate_digest_formula": "sha256 over the sorted lines '<sha256>  ./<path relative to dist>\\n' of every exported file",
+  "file_count": 24,
+  "files": [
+    {
+      "path": "dist/errors.d.ts",
+      "sha256": "f8b09ea42e365120a58d82c5719efe7dc573877e017700628c0223fc575c3b76"
+    },
+    {
+      "path": "dist/errors.js",
+      "sha256": "5cf8dda005f1f7b77bfc78914c58a8e63bda62e9a67967ca061fc68aff63ec5d"
+    },
+    {
+      "path": "dist/httpClient.d.ts",
+      "sha256": "f597cb888cb8f916dd06b111b4f9e795d5c5a5fc689c098f787fcb1db2c3cd8f"
+    },
+    {
+      "path": "dist/httpClient.js",
+      "sha256": "f12e69ba7503cdb70ff54e5152f69807081e159f2b41555cf2258f761a03cc90"
+    },
+    {
+      "path": "dist/index.d.ts",
+      "sha256": "c68f772ed8f8b8d6e67e9e0a95a752b04371df5bd619fdf03829bace25b72d00"
+    },
+    {
+      "path": "dist/index.js",
+      "sha256": "848499a3688c267924a35361d5da01c142f767927d04945af2f21e78b8ed20f9"
+    },
+    {
+      "path": "dist/server.d.ts",
+      "sha256": "ce705cf74a120bb2fd2d2abec32b83b5ac1831748e7eddbcd6c02a92cb5b06c1"
+    },
+    {
+      "path": "dist/server.js",
+      "sha256": "07fdba69bab6f79c18528bd1db4ef529e7eb9812fe01d6c91fb43c6a2ae67869"
+    },
+    {
+      "path": "dist/toolDefinition.d.ts",
+      "sha256": "2b7d7786bb0c2662338ef1138cd09549d083ffe5bf3dbe9c0a12f374ea926893"
+    },
+    {
+      "path": "dist/toolDefinition.js",
+      "sha256": "3b7fdecc8861cc4046800229736b27884f8c84e15288e0b1e0b5bd585ecd6aae"
+    },
+    {
+      "path": "dist/tools/arms.d.ts",
+      "sha256": "77405f86ef0a27e773ae90e345ce471af0381b6d61defa05333b6841c3639295"
+    },
+    {
+      "path": "dist/tools/arms.js",
+      "sha256": "bfaea8698c3b9f7b2bb6f51a9596157146e25279a759f37fa1f2a00a142af2a2"
+    },
+    {
+      "path": "dist/tools/executions.d.ts",
+      "sha256": "5a8ebfddc7cafe743ba03ea7d0b73bcb0b4f9790d6133c0bc8c9a747095e73b6"
+    },
+    {
+      "path": "dist/tools/executions.js",
+      "sha256": "4d681be8d7d4b76655f854334cafcbca7bb12adc630ac12dd482837344ae7906"
+    },
+    {
+      "path": "dist/tools/modelSources.d.ts",
+      "sha256": "cc89219c7e10fde5774e0d60da64ddc59d129e2da900fd4d841e33f1bac0da77"
+    },
+    {
+      "path": "dist/tools/modelSources.js",
+      "sha256": "50788153bde709ba4635bfead164adfa17adec5dcdd288d06084a3febedd6cca"
+    },
+    {
+      "path": "dist/tools/proposals.d.ts",
+      "sha256": "99f4c62d3a8da9be3abb467cc3aec9a0c2232637e2f4a22b8038caa8857b0e6b"
+    },
+    {
+      "path": "dist/tools/proposals.js",
+      "sha256": "8e482951872129f229aeacfd6aaa68ccff171e0e210ef18a0caaa80439b92865"
+    },
+    {
+      "path": "dist/tools/receipts.d.ts",
+      "sha256": "048da3b196d794dc64f879a56fb55cfe7c0c178f5edb3d52b15ad618fbf3e4ce"
+    },
+    {
+      "path": "dist/tools/receipts.js",
+      "sha256": "65f1a26bfee77016ae077cce155d60a62100670e953b70f3527a943763c2f35b"
+    },
+    {
+      "path": "dist/tools/registry.d.ts",
+      "sha256": "86096887f076740f9642f161c3ae3a300062362c91c8563671eac1778e78bc54"
+    },
+    {
+      "path": "dist/tools/registry.js",
+      "sha256": "b96bd69beeaad22f498414c54355c8d33d5c697b66806a824a83e8755c175959"
+    },
+    {
+      "path": "dist/types.d.ts",
+      "sha256": "edfedfb8e3997359523d0f3773fb6bff9a2c04250dc0d01e5b414f6cfe04da90"
+    },
+    {
+      "path": "dist/types.js",
+      "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
+    }
+  ],
+  "aggregate_sha256": "3885e7f55e3ff1dfc2c7691fd5d1948556731c5135bae2d420c7172f82ecc8c6"
+}

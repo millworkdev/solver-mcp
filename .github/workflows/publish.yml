@@ -1,0 +1,83 @@
+# Trusted-publishing workflow for @millwork/solver-mcp.
+#
+# Runs ONLY on explicit operator dispatch against the protected `npm-publish`
+# environment. Publishes exactly one new immutable version via npm trusted
+# publishing (OIDC, provenance) under the exact `candidate` dist-tag. It
+# refuses to run unless the registry definitively reports the version absent
+# (a cleanly parsed E404 and nothing else), refuses the pre-repository
+# bootstrap version 0.1.0, requires the dispatched expected version to equal
+# the manifest, and carries no npm auth token anywhere.
+#
+# Preconditions the operator must complete before the first dispatch:
+#   1. Create and protect the `npm-publish` environment (required reviewers).
+#   2. Configure the npm-side trusted publisher for @millwork/solver-mcp:
+#      repository millworkdev/solver-mcp, workflow publish.yml,
+#      environment npm-publish. Until then, publish fails closed (no token).
+
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected-version:
+        description: "Exact version to publish (operator confirmation; must equal package.json)"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment: npm-publish
+    env:
+      # The dist-tag is not an input: this workflow publishes only under the
+      # exact `candidate` tag, and the guard re-asserts it.
+      DIST_TAG: candidate
+      # The dispatch input reaches the shell only through the environment so
+      # its value can never be interpreted as script.
+      EXPECTED_VERSION: ${{ inputs.expected-version }}
+    steps:
+      - name: Check out the dispatched ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Pin Node.js 22.14.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Pin npm CLI 11.5.1
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          node_version="$(node --version)"
+          npm_version="$(npm --version)"
+          echo "node ${node_version} / npm ${npm_version}"
+          test "${node_version}" = "v22.14.0"
+          test "${npm_version}" = "11.5.1"
+
+      - name: Check public content rules
+        run: node scripts/check-public-content.mjs
+
+      - name: Check the packed file set and manifest truth
+        run: node scripts/check-packed-files.mjs
+
+      - name: Verify publish preconditions (immutable version, E404-only, token-free)
+        run: bash scripts/verify-publish-preconditions.sh
+
+      - name: Publish with OIDC provenance
+        run: |
+          set -euo pipefail
+          if [ -n "${NODE_AUTH_TOKEN:-}" ] || [ -n "${NPM_TOKEN:-}" ]; then
+            echo "::error::An npm auth token is present in the environment; trusted publishing must be token-free."
+            exit 1
+          fi
+          npm publish --provenance --tag "${DIST_TAG}" --registry=https://registry.npmjs.org

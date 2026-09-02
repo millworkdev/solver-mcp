@@ -33,4 +33,3 @@ export const allTools = [
 ];
 /** Lookup by tool name, for the CallTool dispatcher. */
 export const toolsByName = new Map(allTools.map((tool) => [tool.name, tool]));
-//# sourceMappingURL=registry.js.map

@@ -102,4 +102,3 @@ export class SolverBackendClient {
         return new SolverApiError(body);
     }
 }
-//# sourceMappingURL=httpClient.js.map

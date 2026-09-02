@@ -72,4 +72,3 @@ export const reviewProposalTool = {
         });
     },
 };
-//# sourceMappingURL=proposals.js.map

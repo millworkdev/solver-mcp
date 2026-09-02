@@ -36,4 +36,3 @@ export class SolverApiNetworkError extends Error {
         this.cause = cause;
     }
 }
-//# sourceMappingURL=errors.js.map

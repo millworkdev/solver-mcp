@@ -19,4 +19,3 @@ export const receiptTool = {
         });
     },
 };
-//# sourceMappingURL=receipts.js.map

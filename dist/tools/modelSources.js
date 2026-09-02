@@ -151,4 +151,3 @@ export const listModelDeploymentsTool = {
         return context.backend.request({ method: "GET", path: "model-deployments" });
     },
 };
-//# sourceMappingURL=modelSources.js.map

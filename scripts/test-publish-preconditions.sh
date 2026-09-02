@@ -26,13 +26,19 @@ stage_scenario() {
     require('node:fs').writeFileSync('${scenario_directory}/package.json', JSON.stringify(manifest, null, 2));
   "
   cp "${repository_root}/scripts/verify-publish-preconditions.sh" "${scenario_directory}/verify.sh"
+  cp "${repository_root}/scripts/verify-token-absence.sh" "${scenario_directory}/verify-token-absence.sh"
   cat > "${scenario_directory}/bin/npm" <<SHIM
 #!/usr/bin/env bash
+if [ "\$1" = "whoami" ]; then
+  case "${config_mode}" in
+    has-credential) echo "shim-user"; exit 0 ;;
+    *) echo "npm error code ENEEDAUTH" >&2; exit 1 ;;
+  esac
+fi
 if [ "\$1" = "config" ]; then
   case "${config_mode}" in
-    clean) echo "undefined"; exit 0 ;;
-    probe-fails) echo "npm config inspection unavailable" >&2; exit 1 ;;
-    has-token) echo "shimTokenValueForNegativeTest"; exit 0 ;;
+    clean|has-credential) echo "${scenario_directory}/global-npmrc-absent"; exit 0 ;;
+    globalconfig-fails) echo "npm config inspection unavailable" >&2; exit 1 ;;
   esac
 fi
 case "${view_mode}" in
@@ -85,8 +91,9 @@ run_scenario empty-expected-refuses        0.1.1        clean-e404      clean   
 run_scenario wrong-dist-tag-refuses        0.1.1        clean-e404      clean       beta      0.1.1     refuses
 run_scenario latest-dist-tag-refuses       0.1.1        clean-e404      clean       latest    0.1.1     refuses
 run_scenario ambient-token-refuses         0.1.1        clean-e404      clean       candidate 0.1.1     refuses NODE_AUTH_TOKEN=shim-token-value
-run_scenario token-probe-failure-refuses   0.1.1        clean-e404      probe-fails candidate 0.1.1     refuses
-run_scenario config-token-refuses          0.1.1        clean-e404      has-token   candidate 0.1.1     refuses
+run_scenario env-config-auth-refuses       0.1.1        clean-e404      clean       candidate 0.1.1     refuses npm_config_registry_authtoken=shim-token-value
+run_scenario globalconfig-probe-refuses    0.1.1        clean-e404      globalconfig-fails candidate 0.1.1 refuses
+run_scenario whoami-credential-refuses     0.1.1        clean-e404      has-credential candidate 0.1.1  refuses
 
 # .npmrc token entries refuse even when every other probe is clean.
 npmrc_directory="$(stage_scenario npmrc-token-refuses 0.1.1 clean-e404 clean)"
@@ -109,4 +116,4 @@ if [ "${failures}" -gt 0 ]; then
   echo "${failures} precondition scenario(s) failed"
   exit 1
 fi
-echo "publish-precondition negatives ok (15 scenarios)"
+echo "publish-precondition negatives ok (16 scenarios)"

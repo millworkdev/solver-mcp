@@ -77,5 +77,11 @@ jobs:
         with:
           node-version: "22.14.0"
 
+      - name: Pin the npm CLI the publish workflow uses
+        run: npm install --global npm@11.5.1
+
       - name: Exercise publish-guard negative cases (no dispatch, no publish)
         run: bash scripts/test-publish-preconditions.sh
+
+      - name: Exercise credential inspection against the real pinned npm
+        run: bash scripts/test-token-absence-real-npm.sh

@@ -48,33 +48,11 @@ if [ "${DIST_TAG:-}" != "candidate" ]; then
   exit 1
 fi
 
-if [ -n "${NODE_AUTH_TOKEN:-}" ] || [ -n "${NPM_TOKEN:-}" ] || [ -n "${NPM_CONFIG__AUTH:-}" ]; then
-  echo "::error::An npm auth token is present in the environment; trusted publishing must be token-free." >&2
-  exit 1
-fi
-# Every token inspection must itself succeed; a failing inspection could
-# conceal a configured token, so it refuses.
-token_probe_status=0
-config_token="$(npm config get //registry.npmjs.org/:_authToken 2>&1)" || token_probe_status=$?
-if [ "${token_probe_status}" -ne 0 ]; then
-  echo "::error::npm token inspection failed (exit ${token_probe_status}); refusing rather than concealing a token." >&2
-  printf '%s\n' "${config_token}" >&2
-  exit 1
-fi
-if [ -n "${config_token}" ] && [ "${config_token}" != "undefined" ] && [ "${config_token}" != "null" ]; then
-  echo "::error::An npm auth token is present in npm config; trusted publishing must be token-free." >&2
-  exit 1
-fi
-# A literal token value in any applicable npmrc refuses. An unresolved
-# environment reference (e.g. a value starting with "$") is the inert
-# placeholder setup-node writes and resolves through the environment checks
-# above; a literal value is a real credential and fails closed.
-for npmrc_path in ./.npmrc "${HOME}/.npmrc" "${NPM_CONFIG_USERCONFIG:-}"; do
-  if [ -n "${npmrc_path}" ] && [ -f "${npmrc_path}" ] && grep -Eq '_authToken[[:space:]]*=[[:space:]]*[^[:space:]$]' "${npmrc_path}"; then
-    echo "::error::${npmrc_path} carries a literal npm auth token entry; trusted publishing must be token-free." >&2
-    exit 1
-  fi
-done
+# Credential inspection lives in its own fail-closed script so it can be
+# exercised against the real pinned npm as well as adversarial fixtures.
+# It deliberately avoids the protected _authToken config key, which exits
+# nonzero on npm >= 11 even when no token exists.
+bash "$(dirname "$0")/verify-token-absence.sh"
 
 lookup_status=0
 lookup_output="$(npm view "${package_name}@${package_version}" version --json --registry=https://registry.npmjs.org 2>/dev/null)" || lookup_status=$?

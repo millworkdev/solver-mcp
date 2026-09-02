@@ -1,0 +1,40 @@
+{
+  "name": "@millwork/solver-mcp",
+  "version": "0.1.0",
+  "description": "Millwork Solver execution MCP server -- the solver_* tools over stdio.",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "solver-mcp": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --import tsx --test --test-concurrency=1 test/cliHelp.test.ts test/serverRoundtrip.test.ts test/toolSchemas.test.ts test/safeTransport.test.ts test/failureClasses.test.ts test/liveBackendRoundtrip.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

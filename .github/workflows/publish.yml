@@ -61,6 +61,10 @@ jobs:
           npm --version
 
       - name: Refuse anything but a new immutable candidate of this package
+        env:
+          # Dispatch input reaches the shell only through the environment so
+          # its value can never be interpreted as script.
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
           set -euo pipefail
           PACKAGE_NAME="$(node -p "require('./package.json').name")"
@@ -69,8 +73,8 @@ jobs:
             echo "Refusing: this workflow publishes only @millwork/solver-mcp, got $PACKAGE_NAME" >&2
             exit 1
           fi
-          if [ "$PACKAGE_VERSION" != "${{ inputs.expected_version }}" ]; then
-            echo "Refusing: package.json version $PACKAGE_VERSION does not equal the dispatched expected_version ${{ inputs.expected_version }}" >&2
+          if [ "$PACKAGE_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "Refusing: package.json version $PACKAGE_VERSION does not equal the dispatched expected_version $EXPECTED_VERSION" >&2
             exit 1
           fi
           if [ "$PACKAGE_VERSION" = "0.1.0" ]; then

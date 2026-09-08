@@ -16,7 +16,7 @@
 // Run: node scripts/check-public-content.mjs   (exits nonzero on violation)
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // An explicit root argument lets the negative-fixture tests point this exact
@@ -25,6 +25,11 @@ const repositoryRoot = process.argv[2]
   ? resolve(process.argv[2])
   : resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
+
+function resolvesInsideRepository(candidate) {
+  const within = relative(repositoryRoot, candidate);
+  return within !== "" && !within.startsWith("..") && !isAbsolute(within);
+}
 
 function listFiles(directory) {
   const entries = [];
@@ -48,6 +53,12 @@ const allowedUrlPatterns = [
   /^https?:\/\/(?:www\.)?apache\.org\//,
   /^https:\/\/api\.getmillwork\.dev\//,
   /^https:\/\/docs\.getmillwork\.dev(?:\/|$)/,
+  // The two customer destinations the CLI prints. Anchored to these exact
+  // paths: no other app subpath, and no host lookalike, is allowed.
+  // Trailing sentence punctuation is tolerated because the URL matcher above
+  // stops only at whitespace and brackets, so prose ending on this link would
+  // otherwise fail. It cannot widen the host or admit another path.
+  /^https:\/\/app\.getmillwork\.dev\/(?:keys|billing)[.,;:]?$/,
   /^https?:\/\/docs\.npmjs\.com\//,
   /^https:\/\/github\.com\/rhysd\/actionlint\//,
   /^https:\/\/claude\.com\/claude-code\b/,
@@ -83,6 +94,7 @@ const forbiddenPatterns = [
 // public reader at material that is not public.
 const pathReferencePattern = /(?:\.\.?\/)*[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+\.[A-Za-z]{1,5}\b/g;
 
+
 for (const path of textFiles) {
   const raw = readFileSync(resolve(repositoryRoot, path), "utf8");
   const urls = raw.match(/https?:\/\/[^\s"'`)\]>]+/g) ?? [];
@@ -106,7 +118,14 @@ for (const path of textFiles) {
     if (referenceMatch.index > 0 && text[referenceMatch.index - 1] === "@") continue;
     const fromRoot = resolve(repositoryRoot, reference);
     const fromFile = resolve(repositoryRoot, dirname(path), reference);
-    if (!existsSync(fromRoot) && !existsSync(fromFile)) {
+    // Containment before existence: a relative reference can escape the root,
+    // and a sync workspace routinely has private checkouts as siblings, so
+    // testing existence alone accepts the pointer exactly when the nonpublic
+    // file is really there -- the one case this scan exists to reject.
+    const satisfied = [fromRoot, fromFile].some(
+      (candidate) => resolvesInsideRepository(candidate) && existsSync(candidate),
+    );
+    if (!satisfied) {
       failures.push(`${path}: reference to a file that is not public here: ${reference}`);
     }
   }

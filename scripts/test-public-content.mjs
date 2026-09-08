@@ -53,6 +53,13 @@ const foreignUrl = ["https:", "//example", ".com/internal"].join("");
 const docsUrl = ["https:", "//docs.getmillwork.dev"].join("");
 const docsLookalikeUrl = ["https:", "//docs.getmillwork.dev", ".evil/help"].join("");
 const nonpublicPath = ["docs/", "internal-notes", ".md"].join("");
+const appKeysUrl = ["https:", "//app.getmillwork.dev", "/keys"].join("");
+const appBillingUrl = ["https:", "//app.getmillwork.dev", "/billing"].join("");
+const appOtherUrl = ["https:", "//app.getmillwork.dev", "/admin"].join("");
+const appLookalikeUrl = ["https:", "//app.getmillwork.dev", ".evil/keys"].join("");
+// A regex literal whose flags and method call mimic a path reference, and the
+// same shape written in prose where no stripping applies.
+const regexLiteralLine = ["/plan digest has ", "expired", "/i.test(detail)"].join("");
 
 runCase("change-reference-rejects", "comment.js", `// works against the ${changeReference} backend\n`, "rejects", "internal-change-reference");
 runCase("issue-reference-rejects", "notes.md", `Held behind ${issueReference} for now.\n`, "rejects", "internal-change-reference");
@@ -76,6 +83,22 @@ runCase(
   `Read the public documentation: ${docsUrl}\n`,
   "accepts",
 );
+mkdirSync(join(workDirectory, "private"), { recursive: true });
+writeFileSync(join(workDirectory, "private", "secret.md"), "internal notes\n");
+const escapingPath = ["../private/", "secret", ".md"].join("");
+runCase("existing-sibling-outside-root-rejects", "guide.md", `See ${escapingPath} for details.\n`, "rejects", "not public here");
+
+runCase("app-other-path-rejects", "links.md", `See ${appOtherUrl} for details.\n`, "rejects", "URL outside the allowed public set");
+runCase("app-lookalike-url-rejects", "links.md", `See ${appLookalikeUrl} for details.\n`, "rejects", "URL outside the allowed public set");
+runCase(
+  "app-customer-links-accept",
+  "guidance.md",
+  `Create a key at ${appKeysUrl} and review spending at ${appBillingUrl}.\n`,
+  "accepts",
+);
+runCase("regex-literal-in-code-accepts", "guidance.js", `if (${regexLiteralLine}) return;\n`, "accepts");
+runCase("regex-literal-in-prose-rejects", "notes.md", `Matched by ${regexLiteralLine}.\n`, "rejects", "not public here");
+runCase("nonpublic-path-in-code-still-rejects", "helper.js", `${regexLiteralLine}; // per ${nonpublicPath}\n`, "rejects", "not public here");
 runCase(
   "plain-public-prose-accepts",
   "about.md",
@@ -88,4 +111,4 @@ if (failures.length > 0) {
   process.stderr.write(failures.map((failure) => `FAIL ${failure}`).join("\n") + "\n");
   process.exit(1);
 }
-process.stdout.write("public-content negative fixtures ok (13 cases)\n");
+process.stdout.write("public-content negative fixtures ok (20 cases)\n");

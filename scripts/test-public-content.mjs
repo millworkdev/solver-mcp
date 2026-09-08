@@ -64,6 +64,13 @@ const regexLiteralLine = ["/plan digest has ", "expired", "/i.test(detail)"].joi
 // erased these before they could be scanned, so each shape is pinned.
 const missingDotSlash = ["./missing/", "note", ".md"].join("");
 const missingDotDot = ["../outside/", "secret", ".md"].join("");
+// Names that merely resemble regex flags. A suffix cannot establish that the
+// scanner is looking at JavaScript, so nothing is exempted on one.
+const flagLookalikeTest = ["fixtures/", "i", ".test"].join("");
+const flagLookalikeExec = ["fixtures/", "g", ".exec"].join("");
+const flagLookalikeFlags = ["fixtures/", "g", ".flags"].join("");
+const escapingLookalike = ["../outside/", "i", ".test"].join("");
+const namedPatternLine = ["EXPIRED_PLAN_DIGEST", "_DETAIL", ".test(detail)"].join("");
 
 runCase("change-reference-rejects", "comment.js", `// works against the ${changeReference} backend\n`, "rejects", "internal-change-reference");
 runCase("issue-reference-rejects", "notes.md", `Held behind ${issueReference} for now.\n`, "rejects", "internal-change-reference");
@@ -104,7 +111,11 @@ runCase("missing-dot-slash-in-comment-rejects", "sample.js", `// See ${missingDo
 runCase("missing-dot-slash-in-string-rejects", "sample.js", `const note = "${missingDotSlash}";\n`, "rejects", "not public here");
 runCase("missing-dot-dot-in-comment-rejects", "sample.js", `// See ${missingDotDot} for details.\n`, "rejects", "not public here");
 runCase("missing-dot-dot-in-string-rejects", "sample.js", `const note = "${missingDotDot}";\n`, "rejects", "not public here");
-runCase("regex-literal-in-code-accepts", "guidance.js", `if (${regexLiteralLine}) return;\n`, "accepts");
+runCase("inline-regex-literal-in-code-rejects", "guidance.js", `if (${regexLiteralLine}) return;\n`, "rejects", "not public here");
+runCase("named-pattern-in-code-accepts", "guidance.js", `if (${namedPatternLine}) return;\n`, "accepts");
+runCase("flag-lookalike-test-rejects", "sample.js", `// See ${flagLookalikeTest} for details.\n`, "rejects", "not public here");
+runCase("flag-lookalike-exec-in-string-rejects", "sample.js", `const f = "${flagLookalikeExec}";\n`, "rejects", "not public here");
+runCase("flag-lookalike-flags-rejects", "sample.js", `// See ${flagLookalikeFlags} for details.\n`, "rejects", "not public here");
 runCase("regex-literal-in-prose-rejects", "notes.md", `Matched by ${regexLiteralLine}.\n`, "rejects", "not public here");
 runCase("nonpublic-path-in-code-still-rejects", "helper.js", `${regexLiteralLine}; // per ${nonpublicPath}\n`, "rejects", "not public here");
 runCase(
@@ -113,6 +124,29 @@ runCase(
   "The server registers 18 tools over stdio and never accepts raw credential material.\n",
   "accepts",
 );
+
+{
+  // An escaping reference whose name resembles regex flags, with the target
+  // really present. This is the shape a suffix-based exemption let through.
+  const caseDirectory = join(workDirectory, "existing-sibling-lookalike");
+  mkdirSync(join(caseDirectory, "outside"), { recursive: true });
+  mkdirSync(join(caseDirectory, "pub"), { recursive: true });
+  writeFileSync(join(caseDirectory, "outside", "i.test"), "internal notes\n");
+  writeFileSync(join(caseDirectory, "pub", "sample.js"), `// See ${escapingLookalike} for details.\n`);
+  let rejected = false;
+  let output = "";
+  try {
+    output = execFileSync("node", [scannerPath, join(caseDirectory, "pub")], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  } catch (error) {
+    rejected = true;
+    output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
+  }
+  if (!rejected || !output.includes("not public here")) {
+    failures.push(`existing-sibling-lookalike-rejects: expected rejection, got: ${output.trim()}`);
+  } else {
+    console.log("ok existing-sibling-lookalike-rejects (rejects)");
+  }
+}
 
 {
   // The dangerous shape: the escaping target really exists, and the reference
@@ -142,4 +176,4 @@ if (failures.length > 0) {
   process.stderr.write(failures.map((failure) => `FAIL ${failure}`).join("\n") + "\n");
   process.exit(1);
 }
-process.stdout.write("public-content negative fixtures ok (25 cases)\n");
+process.stdout.write("public-content negative fixtures ok (30 cases)\n");

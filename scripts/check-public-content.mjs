@@ -94,31 +94,6 @@ const forbiddenPatterns = [
 // public reader at material that is not public.
 const pathReferencePattern = /(?:\.\.?\/)*[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+\.[A-Za-z]{1,5}\b/g;
 
-// A JavaScript regex literal whose closing delimiter is followed by flags and a
-// method call has the exact shape of a path reference: a phrase, a slash, a
-// short flag run, then a dot and a short word.
-//
-// This is deliberately NOT done by blanking literals out of the text. That
-// approach erased real references: in a dot-slash relative reference the slash
-// following the leading dot opens what looks like a literal, so the middle of
-// the path was removed and the reference never reached the scan at all. A
-// reviewer reproduced it in both a comment and a string. Comments and string
-// contents are now left completely
-// intact, and a single match is skipped only in a code file, and only when its
-// final segment is regex flags followed by a RegExp member -- which a file name
-// is not. Prose keeps the stricter reading, because a literal cannot occur there.
-const REGEXP_MEMBERS = [
-  "test", "exec", "source", "flags", "lastIndex", "global", "sticky",
-  "unicode", "unicodeSets", "ignoreCase", "multiline", "dotAll", "hasIndices",
-];
-const regexLiteralMemberShape = new RegExp(`\\/[dgimsuvy]*\\.(?:${REGEXP_MEMBERS.join("|")})$`);
-
-const codeFilePattern = /\.(?:m|c)?[jt]s$/;
-
-/** Only in a code file, where a regex literal is a construct that can occur. */
-function isRegexLiteralMemberAccess(path, reference) {
-  return codeFilePattern.test(path) && regexLiteralMemberShape.test(reference);
-}
 
 for (const path of textFiles) {
   const raw = readFileSync(resolve(repositoryRoot, path), "utf8");
@@ -140,7 +115,6 @@ for (const path of textFiles) {
   }
   for (const referenceMatch of text.matchAll(pathReferencePattern)) {
     const reference = referenceMatch[0];
-    if (isRegexLiteralMemberAccess(path, reference)) continue;
     if (referenceMatch.index > 0 && text[referenceMatch.index - 1] === "@") continue;
     const fromRoot = resolve(repositoryRoot, reference);
     const fromFile = resolve(repositoryRoot, dirname(path), reference);

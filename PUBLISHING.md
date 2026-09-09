@@ -21,9 +21,12 @@ the published, immutable `@millwork/solver-mcp@0.1.0` registry artifact:
   and repository-only scripts were pruned from the manifest;
 - the `README.md` describes the published package as installed from the
   registry, not any private working layout;
-- the version advanced to `0.1.1`, because published versions are immutable
+- the version advanced to `0.2.0`, because published versions are immutable
   and are never republished — `0.1.0` predates this repository and stays
-  exactly as published, without a provenance attestation.
+  exactly as published, without a provenance attestation, and `0.1.1`
+  through `0.1.4` are published or reserved by the release drill plan;
+- package metadata carries search keywords, so the package is findable by
+  what it does and not only by its exact name.
 
 Derivation and review evidence are retained privately, and before any
 publish the exported `dist/` is re-verified against a rebuild from the

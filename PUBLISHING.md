@@ -63,10 +63,10 @@ Every pull request and push to `main` runs
   18-name tool surface pinned in `scripts/expected-tool-surface.json` with
   public wording; `scripts/test-tool-surface.mjs` proves the comparison
   catches renames, additions, removals, and duplicates;
-- `scripts/test-publish-preconditions.sh` — 16 negative cases for the
+- `scripts/test-publish-preconditions.sh` — offline cases for the
   publish guard, including mixed registry output that embeds a cached E404
   inside another failure, a failing token inspection, a literal npmrc
-  token, a wrong or default dist-tag, and an expected-version mismatch.
+  token, a malformed dist-tag, and an expected-version mismatch.
   CI never dispatches the publish workflow and never publishes.
 
 ## Publishing
@@ -74,10 +74,10 @@ Every pull request and push to `main` runs
 Publishing happens only through
 [`.github/workflows/publish.yml`](.github/workflows/publish.yml):
 
-- **Operator dispatch only** (`workflow_dispatch`) against the protected
-  `npm-publish` environment. The operator must create and protect that
-  environment (required reviewers) before the first dispatch; a dispatch is
-  itself an operator gate.
+- **Manual dispatch** (`workflow_dispatch`) by the release manager after
+  the operator accepts the release. Both packages require `expected-version`
+  and `dist-tag` (default `latest`). The protected `npm-publish` environment
+  still requires human approval before publication.
 - **npm trusted publishing (OIDC)** with provenance. The workflow has
   `id-token: write` and no npm token anywhere; it cannot publish until the
   operator configures the npm-side trusted publisher for
@@ -87,7 +87,8 @@ Publishing happens only through
 - **Immutable-version discipline**: `scripts/verify-publish-preconditions.sh`
   proceeds only when the registry lookup parses cleanly as a single E404
   error with no other failure marker; refuses `0.1.0` (the pre-repository
-  bootstrap version); requires stable SemVer equal to the operator-dispatched
-  expected version; publishes only under the exact `candidate` dist-tag; and
-  refuses when any token inspection finds a token or itself fails. `latest`
-  is never moved by this workflow.
+  bootstrap version); requires stable SemVer equal to the
+  accepted `expected-version` supplied at dispatch; rejects malformed tags; and refuses when any token
+  inspection finds a token or itself fails. For the accepted release, set `dist-tag` to
+  `latest`. Publishing under `latest` leaves existing `candidate` tags on
+  their prior versions.

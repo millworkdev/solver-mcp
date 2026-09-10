@@ -8,7 +8,7 @@
 #     equals the operator-confirmed EXPECTED_VERSION;
 #   - the version is not 0.1.0 -- the pre-repository bootstrap version is
 #     immutable, never republished, and never gains a provenance attestation;
-#   - the dist-tag is exactly `candidate`;
+#   - the dist-tag matches the permitted pattern; latest is the release default;
 #   - no npm auth token is present in the environment or in any applicable
 #     npm configuration, and every token inspection must itself succeed --
 #     a failing inspection refuses rather than concealing a token;
@@ -29,7 +29,7 @@ if [ "${package_name}" != "@millwork/solver-mcp" ]; then
 fi
 
 if ! printf '%s' "${package_version}" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'; then
-  echo "::error::Version '${package_version}' is not stable SemVer; candidates publish stable versions only." >&2
+  echo "::error::Version '${package_version}' is not stable SemVer; releases publish stable versions only." >&2
   exit 1
 fi
 
@@ -43,8 +43,9 @@ if [ -z "${EXPECTED_VERSION:-}" ] || [ "${package_version}" != "${EXPECTED_VERSI
   exit 1
 fi
 
-if [ "${DIST_TAG:-}" != "candidate" ]; then
-  echo "::error::This workflow publishes only under the exact dist-tag 'candidate'; got '${DIST_TAG:-}'. latest is never moved." >&2
+if ! printf '%s' "${DIST_TAG:-}" | grep -Eq '^[a-z0-9][a-z0-9._-]{0,63}$' ||
+   printf '%s' "${DIST_TAG:-}" | grep -Eq '^[0-9]'; then
+  echo "::error::dist-tag must match ^[a-z0-9][a-z0-9._-]{0,63}$ and must not start with a number." >&2
   exit 1
 fi
 

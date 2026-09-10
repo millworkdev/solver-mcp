@@ -1,18 +1,8 @@
-# Trusted-publishing workflow for @millwork/solver-mcp.
-#
-# Runs ONLY on explicit operator dispatch against the protected `npm-publish`
-# environment. Publishes exactly one new immutable version via npm trusted
-# publishing (OIDC, provenance) under the exact `candidate` dist-tag. It
-# refuses to run unless the registry definitively reports the version absent
-# (a cleanly parsed E404 and nothing else), refuses the pre-repository
-# bootstrap version 0.1.0, requires the dispatched expected version to equal
-# the manifest, and carries no npm auth token anywhere.
-#
-# Preconditions the operator must complete before the first dispatch:
-#   1. Create and protect the `npm-publish` environment (required reviewers).
-#   2. Configure the npm-side trusted publisher for @millwork/solver-mcp:
-#      repository millworkdev/solver-mcp, workflow publish.yml,
-#      environment npm-publish. Until then, publish fails closed (no token).
+# Trusted publishing for @millwork/solver-mcp.
+# Manual dispatch after release acceptance; the npm-publish environment keeps
+# its human approval. Publishes one new immutable version with OIDC provenance.
+# Both packages use expected-version plus dist-tag (latest by default).
+# No npm token is permitted. Publisher/environment configuration is unchanged.
 
 name: publish
 
@@ -20,8 +10,12 @@ on:
   workflow_dispatch:
     inputs:
       expected-version:
-        description: "Exact version to publish (operator confirmation; must equal package.json)"
+        description: "Exact accepted version (must equal package.json)"
         required: true
+      dist-tag:
+        description: "npm dist-tag for the published version"
+        required: true
+        default: "latest"
 
 permissions:
   contents: read
@@ -36,12 +30,9 @@ jobs:
     runs-on: ubuntu-24.04
     environment: npm-publish
     env:
-      # The dist-tag is not an input: this workflow publishes only under the
-      # exact `candidate` tag, and the guard re-asserts it.
-      DIST_TAG: candidate
-      # The dispatch input reaches the shell only through the environment so
-      # its value can never be interpreted as script.
+      # Dispatch values reach shell scripts only through the environment.
       EXPECTED_VERSION: ${{ inputs.expected-version }}
+      DIST_TAG: ${{ inputs.dist-tag }}
     steps:
       - name: Check out the dispatched ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

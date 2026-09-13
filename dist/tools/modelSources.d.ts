@@ -28,3 +28,5 @@ export declare const disconnectSourceConnectionTool: ToolDefinition;
 export declare const syncSourceDeploymentsTool: ToolDefinition;
 /** `solver_list_model_deployments` -> `GET /v1/model-deployments`. */
 export declare const listModelDeploymentsTool: ToolDefinition;
+/** `solver_list_model_catalog` -> `GET /v1/model-catalog`. */
+export declare const listModelCatalogTool: ToolDefinition;

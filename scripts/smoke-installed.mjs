@@ -2,8 +2,9 @@
 // clean temporary directory, and checks the artifact the way a user meets it:
 //
 //   1. `solver-mcp --help` exits 0 and names the product;
-//   2. a real stdio session answers `initialize` and lists exactly the 18
-//      `solver_*` tools, with public wording in every name and description.
+//   2. a real stdio session answers `initialize` and lists exactly the
+//      pinned `solver_*` tool surface, with public wording in every name and
+//      description.
 //
 // The dummy environment values below never reach a network: `tools/list` is
 // served locally by the server. No publish, dispatch, or registry mutation.
@@ -109,7 +110,7 @@ try {
 
   const tools = toolsResponse.result.tools;
   const surfaceFindings = compareToolSurface(tools.map((tool) => tool.name));
-  if (surfaceFindings.length > 0) fail(`tool surface drifted from the pinned 18-name set: ${surfaceFindings.join("; ")}`);
+  if (surfaceFindings.length > 0) fail(`tool surface drifted from the pinned surface: ${surfaceFindings.join("; ")}`);
   for (const tool of tools) {
     const wording = `${tool.name} ${tool.description ?? ""}`;
     if (supersededJargon.test(wording)) fail(`tool ${tool.name} emits superseded jargon`);

@@ -121,7 +121,7 @@ runCase("nonpublic-path-in-code-still-rejects", "helper.js", `${regexLiteralLine
 runCase(
   "plain-public-prose-accepts",
   "about.md",
-  "The server registers 18 tools over stdio and never accepts raw credential material.\n",
+  "The server registers 19 tools over stdio and never accepts raw credential material.\n",
   "accepts",
 );
 

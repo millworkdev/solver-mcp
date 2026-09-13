@@ -1,8 +1,9 @@
 {
-  "description": "The canonical tool surface of @millwork/solver-mcp: exactly these 18 tool names, in sorted order. The installed smoke fails closed on any addition, removal, or rename.",
+  "description": "The canonical tool surface of @millwork/solver-mcp: exactly these 19 tool names, in sorted order. The installed smoke fails closed on any addition, removal, or rename.",
   "tool_names": [
     "solver_cancel",
     "solver_create_source_connection",
+    "solver_disconnect_source_connection",
     "solver_enable_model_arm",
     "solver_list_arms",
     "solver_list_model_deployments",

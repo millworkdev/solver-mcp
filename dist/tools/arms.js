@@ -114,7 +114,7 @@ export const listArmsTool = {
 export const enableModelArmTool = {
     name: "solver_enable_model_arm",
     description: "Save the exact catalog model the user chose from the just-tested provider connection (POST /v1/arms with kind=model and model_deployment_id). " +
-        "Confirm the catalog entry's connection_id matches that connection and use its arm_registration_template values unchanged. Keep that connection_id with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
+        "Read solver_list_model_catalog, confirm the entry's connection.connection_id matches that connection, and copy its arm_registration_template fields unchanged except kind=model, which this tool supplies. Keep that connection_id with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
     inputSchema: {
         type: "object",
         required: ["model_deployment_id", "display_name", "capability_tags", "data_class_grants", "cost_class"],

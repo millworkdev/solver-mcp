@@ -171,7 +171,8 @@ export const disconnectSourceConnectionTool = {
 export const syncSourceDeploymentsTool = {
     name: "solver_sync_source_deployments",
     description: "Refresh the supported catalog models that the tested provider connection can access " +
-        "(POST /v1/source-connections/{id}/deployments/sync). A returned model is both supported by Millwork and available to this provider account; empty or failed discovery is not permission to guess a model.",
+        "(POST /v1/source-connections/{id}/deployments/sync). A returned model is both supported by Millwork and available to this provider account; empty or failed discovery is not permission to guess a model. " +
+        "Next call solver_list_model_catalog for the exact registration template before saving a model.",
     inputSchema: {
         type: "object",
         required: ["connection_id"],
@@ -190,9 +191,23 @@ export const syncSourceDeploymentsTool = {
 export const listModelDeploymentsTool = {
     name: "solver_list_model_deployments",
     description: "List supported catalog models and their provider connections (GET /v1/model-deployments). " +
-        "Choose only a catalog entry whose connection_id matches the provider connection just tested; then let the user choose the exact model and save it with solver_enable_model_arm.",
+        "These deployment rows do not contain registration templates. After sync, call solver_list_model_catalog, " +
+        "where connection.connection_id matches the provider connection just tested, to obtain the exact model registration settings.",
     inputSchema: { type: "object", properties: {} },
     async handler(_args, context) {
         return context.backend.request({ method: "GET", path: "model-deployments" });
+    },
+};
+/** `solver_list_model_catalog` -> `GET /v1/model-catalog`. */
+export const listModelCatalogTool = {
+    name: "solver_list_model_catalog",
+    description: "Read the models this organization can use and their exact arm_registration_template " +
+        "(GET /v1/model-catalog). After refreshing a provider connection, choose only an entry whose " +
+        "connection.connection_id matches that tested connection. Let the user choose the model, then " +
+        "copy its template fields unchanged into solver_enable_model_arm; kind=model is supplied by that tool. " +
+        "An empty catalog is not permission to guess registration settings or switch providers.",
+    inputSchema: { type: "object", properties: {} },
+    async handler(_args, context) {
+        return context.backend.request({ method: "GET", path: "model-catalog" });
     },
 };

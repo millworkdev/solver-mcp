@@ -84,11 +84,12 @@ intent id.
 
 ## Retry and recovery boundary
 
-The 19 tools divide into:
+The 20 tools divide into:
 
-- 9 safe reads that may retry network and 5xx failures;
-- `solver_submit`, which may retry only with the same caller-owned,
-  non-empty idempotency key and the same request bytes; and
+- 10 safe reads that may retry network and 5xx failures;
+- `solver_submit` and `solver_disconnect_source_connection`, which may retry
+  only with the same caller-owned, non-empty idempotency key and the same
+  request bytes; and
 - 8 write-capable tools that make one attempt because they expose no
   caller-owned idempotency key.
 

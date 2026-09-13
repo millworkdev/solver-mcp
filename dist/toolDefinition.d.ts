@@ -19,6 +19,16 @@ export interface ToolContext {
     backend: SolverBackendClient;
 }
 /**
+ * MCP tool annotations are client-side hints only. The server still enforces
+ * tenant auth, permissions, idempotency, and digest matching.
+ */
+export interface ToolAnnotations {
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
+}
+/**
  * One MCP tool: its name, human description, the literal `inputSchema`
  * advertised to clients, and the handler that runs it. The handler returns
  * the value to JSON-serialize into the tool result; it throws on failure and
@@ -28,6 +38,7 @@ export interface ToolDefinition {
     name: string;
     description: string;
     inputSchema: JsonSchema;
+    annotations?: ToolAnnotations;
     handler(args: Record<string, unknown>, context: ToolContext): Promise<unknown>;
 }
 /**

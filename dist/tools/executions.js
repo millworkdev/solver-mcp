@@ -6,8 +6,9 @@ import { assertRequiredPresent, ToolInputError } from "../toolDefinition.js";
 // Inlined from the product contract §2.3 ExecutionRequest. The doc's
 // MCP schema composes `allOf: [ExecutionRequest]` by $ref, but a $ref to a
 // markdown file is not resolvable by an MCP client, so ExecutionRequest's
-// own required fields (task, policy, verifier_id) are inlined here alongside
-// the hard-required idempotency_key.
+// own required fields (task, policy) are inlined here alongside the
+// hard-required idempotency_key. verifier_id is optional: omitting it uses
+// the backend's built-in output-presence baseline, not semantic verification.
 const taskSchema = {
     type: "object",
     required: ["objective"],
@@ -51,22 +52,34 @@ const policySchema = {
  */
 export const submitTool = {
     name: "solver_submit",
-    description: "Submit a task for governed execution (POST /v1/executions). Requires a " +
-        "unique request ID via idempotency_key (sent as the Idempotency-Key header) -- " +
-        "an MCP client cannot construct a valid call without it.",
+    description: "Submit a live task using the exact saved model the user approved (POST /v1/executions). " +
+        "Before calling, name the task, provider account/connection, exact model, model-usage budget, runtime limit, provider billing, and Millwork platform fee, then obtain explicit paid-run approval. " +
+        "Set routing.required_arm_id to the chosen arm_id so another model cannot be selected. The budget is not a hard cap on a provider call already running. " +
+        "Use a unique idempotency_key; omit verifier_id only for the built-in output-presence baseline, which is not semantic verification.",
     inputSchema: {
         type: "object",
-        required: ["task", "policy", "verifier_id", "idempotency_key"],
+        required: ["task", "policy", "idempotency_key"],
         properties: {
             task: taskSchema,
             policy: policySchema,
-            verifier_id: { type: "string" },
+            verifier_id: { type: "string", minLength: 1 },
+            mode: { enum: ["live", "echo"], default: "live" },
+            routing: {
+                type: "object",
+                additionalProperties: false,
+                required: ["required_arm_id"],
+                properties: {
+                    required_arm_id: {
+                        type: "string",
+                        minLength: 1,
+                        description: "The exact saved-model arm_id the user chose. This prevents fallback to another model.",
+                    },
+                },
+            },
             compose: { enum: ["auto"], default: "auto" },
             idempotency_key: {
                 type: "string",
-                description: "A unique request ID for this call, sent as the Idempotency-Key header " +
-                    "(the product contract §1). Hard-required by this schema, not prose -- " +
-                    "an MCP client cannot construct a valid call without it.",
+                description: "A unique request key for this submission. Reuse it only for the same request after an uncertain response.",
             },
         },
     },
@@ -87,7 +100,8 @@ export const submitTool = {
 /** `solver_status` -> `GET /v1/executions/{id}`. */
 export const statusTool = {
     name: "solver_status",
-    description: "Poll an execution's lifecycle state (GET /v1/executions/{id}).",
+    description: "Read a run's progress or final outcome (GET /v1/executions/{id}). " +
+        "Queued or running is not a failure; continue polling until the run reaches a terminal state.",
     inputSchema: {
         type: "object",
         required: ["execution_id"],
@@ -121,9 +135,8 @@ export const cancelTool = {
 /** `solver_result` -> `GET /v1/executions/{id}/result`. */
 export const resultTool = {
     name: "solver_result",
-    description: "Fetch the retention-bound result of a COMPLETED execution " +
-        "(GET /v1/executions/{id}/result): the final text plus the winner attempt's " +
-        "model provenance (requested vs resolved identity) when one exists.",
+    description: "Read the model's answer from a completed live run (GET /v1/executions/{id}/result), " +
+        "including requested and resolved model identity when available. Read the matching usage record separately with solver_receipt.",
     inputSchema: {
         type: "object",
         required: ["execution_id"],

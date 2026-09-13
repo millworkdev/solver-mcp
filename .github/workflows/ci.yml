@@ -67,7 +67,7 @@ jobs:
       - name: Exercise tool-surface drift negatives
         run: node scripts/test-tool-surface.mjs
 
-      - name: Smoke-test the installed artifact (help, stdio, exact pinned 18-tool surface)
+      - name: Smoke-test the installed artifact (help, stdio, exact pinned 19-tool surface)
         run: node scripts/smoke-installed.mjs
 
   publish-guard:

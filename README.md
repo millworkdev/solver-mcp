@@ -84,7 +84,7 @@ intent id.
 
 ## Retry and recovery boundary
 
-The 18 tools divide into:
+The 19 tools divide into:
 
 - 9 safe reads that may retry network and 5xx failures;
 - `solver_submit`, which may retry only with the same caller-owned,

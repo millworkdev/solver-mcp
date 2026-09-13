@@ -4,8 +4,9 @@ import { assertRequiredPresent } from "../toolDefinition.js";
  */
 export const receiptTool = {
     name: "solver_receipt",
-    description: "Fetch the receipt for an execution -- route rationale, per-slice evals, cost " +
-        "(GET /v1/receipts/{execution_id}). Content-free: never returns task output.",
+    description: "Read a run's outcome, selected model route, checks, and usage record " +
+        "(GET /v1/receipts/{execution_id}). Match it to the submitted run; failed runs can also have receipts. " +
+        "This record is content-free and never returns the model's answer; use solver_result for that.",
     inputSchema: {
         type: "object",
         required: ["execution_id"],

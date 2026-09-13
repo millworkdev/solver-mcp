@@ -113,15 +113,14 @@ export const listArmsTool = {
  */
 export const enableModelArmTool = {
     name: "solver_enable_model_arm",
-    description: "Enable a certification-backed model deployment as an arm (POST /v1/arms with kind=model " +
-        "and model_deployment_id). Use the catalog entry's secretless arm_registration_template " +
-        "values; claims wider than the certified template are rejected.",
+    description: "Save the exact catalog model the user chose from the just-tested provider connection (POST /v1/arms with kind=model and model_deployment_id). " +
+        "Confirm the catalog entry's connection_id matches that connection and use its arm_registration_template values unchanged. Keep that connection_id with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
     inputSchema: {
         type: "object",
         required: ["model_deployment_id", "display_name", "capability_tags", "data_class_grants", "cost_class"],
         additionalProperties: false,
         properties: {
-            model_deployment_id: { type: "string" },
+            model_deployment_id: { type: "string", description: "Exact catalog model deployment chosen by the user after matching its connection_id to the just-tested provider connection." },
             display_name: { type: "string" },
             capability_tags: { type: "array", items: { type: "string" } },
             data_class_grants: { type: "array", items: { type: "string", enum: ["public", "sandbox", "tenant_internal"] } },

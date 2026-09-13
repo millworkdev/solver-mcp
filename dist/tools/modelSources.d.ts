@@ -22,6 +22,8 @@ export declare const createSourceConnectionTool: ToolDefinition;
 export declare const testSourceConnectionTool: ToolDefinition;
 /** `solver_list_source_connections` -> `GET /v1/source-connections`. */
 export declare const listSourceConnectionsTool: ToolDefinition;
+/** `solver_disconnect_source_connection` -> `DELETE /v1/source-connections/{id}`. */
+export declare const disconnectSourceConnectionTool: ToolDefinition;
 /** `solver_sync_source_deployments` -> `POST /v1/source-connections/{id}/deployments/sync`. */
 export declare const syncSourceDeploymentsTool: ToolDefinition;
 /** `solver_list_model_deployments` -> `GET /v1/model-deployments`. */

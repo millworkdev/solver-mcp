@@ -87,7 +87,7 @@
     },
     {
       "path": "dist/tools/receipts.js",
-      "sha256": "50d24fcfcd153446f212aad4fbd4159a5fb9f162cdc32f51ab68e212259dc61d"
+      "sha256": "ecf75e86efc72e5bcfbfbf70c7f065f489bf956662c61b705997be0832e981e1"
     },
     {
       "path": "dist/tools/registry.d.ts",
@@ -106,5 +106,5 @@
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "830ff3fc3c3991c2981107ae38ee82070efb4df675cf3084e0580e09a91e4b55"
+  "aggregate_sha256": "429fa76d48aeaab2cd2824f6eb97adf4cd231f75abd2ee9afec813cb7cd81c85"
 }

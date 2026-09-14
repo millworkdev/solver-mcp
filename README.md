@@ -1,7 +1,7 @@
 # @millwork/solver-mcp
 
 `@millwork/solver-mcp` is the Millwork Solver execution MCP server. It gives an
-approved assistant 18 tenant-authenticated `solver_*` tools over stdio. Some
+approved assistant 20 tenant-authenticated `solver_*` tools over stdio. Some
 tools read state. Others connect model sources, submit work, cancel a run, or
 decide a proposal, so the server is write-capable.
 
@@ -75,7 +75,7 @@ tenant-wide machine key into a narrower credential.
 
 ## Tool surface
 
-The server registers exactly 18 `solver_*` tools; `tools/list` over stdio is
+The server registers exactly 20 `solver_*` tools; `tools/list` over stdio is
 the authoritative surface, and every tool description states what the tool
 maps to and whether it writes. No tool ever accepts or returns raw credential
 material: connecting a model source is a hosted browser handoff against your

@@ -5,22 +5,22 @@ approved assistant 20 tenant-authenticated `solver_*` tools over stdio. Some
 tools read state. Others connect model sources, submit work, cancel a run, or
 decide a proposal, so the server is write-capable.
 
-Versions publish under the `candidate` dist-tag. Pin the tag (or an exact
-version) when installing.
-
 ## Install
 
 Requires Node 20 or Node 22.
 
 ```bash
-npm install --save-exact @millwork/solver-mcp@candidate
+npm install @millwork/solver-mcp
 solver-mcp --help
 ```
+
+`npm install @millwork/solver-mcp` resolves the `latest` dist-tag. Pin an exact
+version for reproducible application builds.
 
 Or run it directly:
 
 ```bash
-npx --yes @millwork/solver-mcp@candidate --help
+npx --yes @millwork/solver-mcp --help
 ```
 
 ## Configure stdio

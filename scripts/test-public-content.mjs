@@ -16,7 +16,10 @@ const scannerPath = resolve(dirname(fileURLToPath(import.meta.url)), "check-publ
 const workDirectory = mkdtempSync(join(tmpdir(), "public-content-fixtures-"));
 const failures = [];
 
+let caseCount = 0;
+
 function runCase(caseName, fileName, content, expectation, expectedFragment = "") {
+  caseCount += 1;
   const caseDirectory = join(workDirectory, caseName);
   mkdirSync(caseDirectory, { recursive: true });
   writeFileSync(join(caseDirectory, fileName), content);
@@ -148,9 +151,43 @@ runCase(
   }
 }
 
+// The one absolute host path the product names on purpose is admitted
+// exactly; a repository-relative lookalike, another file under the same
+// directory, and the same file name under another directory are not.
+const hostBoundaryPath = ["/etc/millwork/", "run-authorization-boundary", ".json"].join("");
+const hostBoundaryRelative = ["etc/millwork/", "run-authorization-boundary", ".json"].join("");
+const hostOtherFile = ["/etc/millwork/", "other-file", ".json"].join("");
+const hostLookalike = ["/etc/attacker/", "run-authorization-boundary", ".json"].join("");
+runCase("host-path-exact-accepts", "runAuthorizationBoundary.js", `export const BOUNDARY = "${hostBoundaryPath}";\n`, "accepts");
+runCase("host-path-relative-rejects", "runAuthorizationBoundary.js", `read("${hostBoundaryRelative}");\n`, "rejects", "not public here");
+runCase("host-path-other-file-rejects", "runAuthorizationBoundary.js", `read("${hostOtherFile}");\n`, "rejects", "not public here");
+runCase("host-path-lookalike-rejects", "runAuthorizationBoundary.js", `read("${hostLookalike}");\n`, "rejects", "not public here");
+runCase("host-path-slash-suffix-rejects", "runAuthorizationBoundary.js", `read("${hostBoundaryPath}/extra");\n`, "rejects", "not public here");
+runCase("host-path-query-suffix-rejects", "runAuthorizationBoundary.js", `read("${hostBoundaryPath}?x=1");\n`, "rejects", "not public here");
+runCase("host-path-fragment-suffix-rejects", "runAuthorizationBoundary.js", `read("${hostBoundaryPath}#x");\n`, "rejects", "not public here");
+runCase("host-path-prose-punctuation-accepts", "README.md", `The host writes the approval document to ${hostBoundaryPath}.\n`, "accepts");
+runCase("host-path-prose-comma-accepts", "README.md", `Write ${hostBoundaryPath}, then retry.\n`, "accepts");
+runCase("host-path-parenthesised-accepts", "README.md", `The fixed file (${hostBoundaryPath}) is host-owned.\n`, "accepts");
+runCase("host-path-parenthesised-sentence-end-accepts", "README.md", `Retry after the host writes it (${hostBoundaryPath}).\n`, "accepts");
+runCase("host-path-bracket-dot-token-rejects", "runAuthorizationBoundary.js", `read("${hostBoundaryPath}).x");\n`, "rejects", "not public here");
+// Inside a quoted string the literal is the whole file name: a trailing
+// punctuation character is a different file, not prose.
+for (const [label, suffix] of [["colon", ":"], ["comma", ","], ["semicolon", ";"], ["dot", "."], ["paren", ")"], ["question", "?"]]) {
+  runCase(`host-path-quoted-${label}-only-rejects`, "runAuthorizationBoundary.js", `export const p = "${hostBoundaryPath}${suffix}";\n`, "rejects", "not public here");
+}
+runCase("host-path-quoted-mismatched-quote-rejects", "runAuthorizationBoundary.js", `export const p = "${hostBoundaryPath}';\n`, "rejects", "not public here");
+runCase("host-path-assignment-colon-rejects", "setup.sh", `p=${hostBoundaryPath}:\n`, "rejects", "not public here");
+runCase("host-path-backtick-prose-accepts", "README.md", `It is at \`${hostBoundaryPath}\`.\n`, "accepts");
+runCase("host-path-single-quoted-accepts", "runAuthorizationBoundary.js", `const p = '${hostBoundaryPath}';\n`, "accepts");
+runCase("host-path-bare-assignment-accepts", "setup.sh", `p=${hostBoundaryPath}\n`, "accepts");
+for (const [label, suffix] of [["colon", ":extra"], ["comma", ",extra"], ["semicolon", ";extra"], ["angle", ">extra"], ["paren", ")extra"], ["dot-token", ".extra"]]) {
+  runCase(`host-path-${label}-suffix-rejects`, "runAuthorizationBoundary.js", `read("${hostBoundaryPath}${suffix}");\n`, "rejects", "not public here");
+}
+
 {
   // The dangerous shape: the escaping target really exists, and the reference
   // is inside a code file where literal-blanking used to remove it.
+  caseCount += 1;
   const caseDirectory = join(workDirectory, "existing-sibling-code");
   mkdirSync(join(caseDirectory, "outside"), { recursive: true });
   mkdirSync(join(caseDirectory, "pub"), { recursive: true });
@@ -176,4 +213,4 @@ if (failures.length > 0) {
   process.stderr.write(failures.map((failure) => `FAIL ${failure}`).join("\n") + "\n");
   process.exit(1);
 }
-process.stdout.write("public-content negative fixtures ok (30 cases)\n");
+process.stdout.write(`public-content negative fixtures ok (${caseCount} cases)\n`);

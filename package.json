@@ -1,6 +1,6 @@
 {
   "name": "@millwork/solver-mcp",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Millwork Solver execution MCP server -- the solver_* tools over stdio.",
   "keywords": [
     "mcp",
@@ -25,6 +25,10 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "solver-mcp": "./dist/index.js"
+  },
+  "imports": {
+    "#solver-run-admission": "./dist/sdk/runAdmission.js",
+    "#solver-run-authorization-boundary": "./dist/sdk/runAuthorizationBoundary.js"
   },
   "exports": {
     ".": {

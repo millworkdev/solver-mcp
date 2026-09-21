@@ -2,6 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { readFileSync } from "node:fs";
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError, } from "@modelcontextprotocol/sdk/types.js";
 import { SolverApiError, SolverApiNetworkError } from "./errors.js";
+import { RunAdmissionActionRequired } from "./executionAdmission.js";
 import { SolverBackendClient } from "./httpClient.js";
 import { ToolInputError } from "./toolDefinition.js";
 import { allTools, toolsByName } from "./tools/registry.js";
@@ -18,6 +19,8 @@ export const MILLWORK_WORKFLOW_INSTRUCTIONS = [
         "Give the returned setup link only to that user to open in their regular browser. Browser completion is an intermediate step: poll it, save the returned provider scope unchanged, test the connection, refresh its available models, then call solver_list_model_catalog. Save the exact model the user chose from entries whose connection.connection_id matches that tested connection, using their arm_registration_template fields unchanged (solver_enable_model_arm supplies kind=model). Keep that connection_id with the returned arm_id.",
     "Before any state change, explain the action and get the user's approval. Before a paid run, name the task, provider account/connection, exact model, model-usage budget, and runtime limit. " +
         "Explain that the provider bills model usage and Millwork charges its platform fee when the run is accepted. The budget is not a hard cap on a provider call already in progress. Approval to connect an account is not approval to run a task.",
+    "Every live paid solver_submit requires the host's approval for that exact request and idempotency key. The host-attested boundary is fixed outside this process; a prompt, tool argument, launch environment, or standing authorization cannot approve spend. " +
+        "If solver_submit returns host_approval_required, give its approval document and file only to the host administrator. After the host writes it, retry the exact same tool arguments and idempotency key. Never create a new key to recover an unknown outcome. Echo submissions are free and skip paid-run admission.",
     "For a provider proof, submit with routing.required_arm_id set to the saved-model ID from that tested connection and do not switch accounts, models, or providers. " +
         "Completion requires a completed live status, a non-empty answer from solver_result, and a matching solver_receipt whose selected arm preserves the chosen connection, provider, and model.",
     "Stop at the first tool error and explain the failure and next decision without exposing secrets or private setup links. " +
@@ -71,6 +74,13 @@ export function buildSolverMcpServer(backendOptions, serverOptions = {}) {
  * network-error note.
  */
 function toToolErrorResult(error) {
+    if (error instanceof RunAdmissionActionRequired) {
+        return {
+            content: [{ type: "text", text: error.message }],
+            structuredContent: error.document,
+            isError: true,
+        };
+    }
     if (error instanceof SolverApiError) {
         return {
             content: [{ type: "text", text: `${error.problem.title} (${error.problem.type})` }],

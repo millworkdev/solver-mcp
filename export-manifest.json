@@ -7,7 +7,7 @@
     "remove the private tenant-template and verifier modules and their unpublished registry entries, replace unpublished verifier names in server.js instructions, then verify the 20-tool public surface"
   ],
   "aggregate_digest_formula": "sha256 over the sorted lines '<sha256>  ./<path relative to dist>\\n' of every exported file",
-  "file_count": 26,
+  "file_count": 34,
   "files": [
     {
       "path": "dist/errors.d.ts",
@@ -16,6 +16,14 @@
     {
       "path": "dist/errors.js",
       "sha256": "5cf8dda005f1f7b77bfc78914c58a8e63bda62e9a67967ca061fc68aff63ec5d"
+    },
+    {
+      "path": "dist/executionAdmission.d.ts",
+      "sha256": "0037dce3bf7ff5c2d07d680a6b9077e378821bd501f592755cb9103cdf34df5d"
+    },
+    {
+      "path": "dist/executionAdmission.js",
+      "sha256": "a09c028c1ba8d617e164257ca0701f5ac2063f0e212783513e3eed48370438d8"
     },
     {
       "path": "dist/httpClient.d.ts",
@@ -31,7 +39,7 @@
     },
     {
       "path": "dist/index.js",
-      "sha256": "8415ca26a13628e8e8a961e7ffffaaa0b0bd91ad26a5159c13af113d89e5e1fc"
+      "sha256": "12d66461b9bc35617837529be0856740078dd38cb6daeaa61f4ea11e7d991c33"
     },
     {
       "path": "dist/recordedCheckPresentation.d.ts",
@@ -42,12 +50,36 @@
       "sha256": "9a8f3f25ba341e95b39efcc9a74216a6b3ed8205b413e5628fc1c9f985b39a68"
     },
     {
+      "path": "dist/sdk/runAdmission.d.ts",
+      "sha256": "2d48778a8ed2d934e56926395ee40b50f97955af670be204400b75d47f478cd7"
+    },
+    {
+      "path": "dist/sdk/runAdmission.js",
+      "sha256": "dd8a35524111b7fea6bde5230ceda3e51647f74e0301301bc640aeb94870229a"
+    },
+    {
+      "path": "dist/sdk/runAuthorizationBoundary.d.ts",
+      "sha256": "ac733df46fd8dbe7ea0271c2e379d25a1dfec0587f130438fbc32708f337ca97"
+    },
+    {
+      "path": "dist/sdk/runAuthorizationBoundary.js",
+      "sha256": "2b5b87f243144288fa3c763f9ed508b4cc0191da207b3b356ee9b4913f3d905a"
+    },
+    {
+      "path": "dist/sdk/types.d.ts",
+      "sha256": "bf8cd2d2897b1d05aff494633dee0ecf957a37dcd65b898554893b9616a30ab4"
+    },
+    {
+      "path": "dist/sdk/types.js",
+      "sha256": "0e990c6497f8625ec9d9a0b342ef3b3a120090c6e51500538300c95d8db61d5e"
+    },
+    {
       "path": "dist/server.d.ts",
       "sha256": "eb05444070fd43b67582418ffd5bf9923c784501c26932df58dd260a6833b954"
     },
     {
       "path": "dist/server.js",
-      "sha256": "543c05bd7b29e8092b1ebe3b529a304686d8de417dbd91aff5efb631ec223756"
+      "sha256": "385b1faa9289be8b5a53473e0ec3ec2098ae62bc362cde3651a30410c5d82bfa"
     },
     {
       "path": "dist/toolDefinition.d.ts",
@@ -71,7 +103,7 @@
     },
     {
       "path": "dist/tools/executions.js",
-      "sha256": "80499f76c5c01c9e21852e49a807d2f560d30e75de18cacf7ab8c382f0e144e9"
+      "sha256": "8545ac850f2c8a243a9b4feb16b555e960313888c8100b2bb41bf8fceb294af5"
     },
     {
       "path": "dist/tools/modelSources.d.ts",
@@ -95,24 +127,24 @@
     },
     {
       "path": "dist/tools/receipts.js",
-      "sha256": "341928173fd56f9983e338dfc9fc277edca9a243072f7721daa44a033b5fa29d"
+      "sha256": "eb7da5dd98c2e96d1604a5c1173bb52b6be3a408de6507661e2ce93e8def39dd"
     },
     {
       "path": "dist/tools/registry.d.ts",
-      "sha256": "a67006558f873e2b21f59552c4bfa1a662099ce59ffb0efa61bfd2754772babe"
+      "sha256": "2cbddb23beec817b5b5aa2ae8c2d9f15d8d90c00e5f51fb1067f32b9bc80778a"
     },
     {
       "path": "dist/tools/registry.js",
-      "sha256": "b73a6b87f934b4799447f81b24dc9b219f2ff88a901b69fb5b799e3d33a0f31c"
+      "sha256": "500ab4ab70823c28cf4a333adf7be4c7ba8158552a45d8aa58ac88cf32cbf149"
     },
     {
       "path": "dist/types.d.ts",
-      "sha256": "edfedfb8e3997359523d0f3773fb6bff9a2c04250dc0d01e5b414f6cfe04da90"
+      "sha256": "7b828b3ef92138256bf9665821562e5797590e47459fa28fd05493d901f10b5a"
     },
     {
       "path": "dist/types.js",
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "974cd03bb99188833adb5c51270948623a2b8c950374b9fed13db0fccd7736e8"
+  "aggregate_sha256": "d2078f3ab08525f5e3cb66677d75752ab12d2371e4f86d954b3e3a64ac523256"
 }

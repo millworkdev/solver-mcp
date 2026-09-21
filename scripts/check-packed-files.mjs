@@ -15,7 +15,8 @@ const failures = [];
 // Source maps are deliberately not shipped: their referenced sources are
 // not public here. The allowlist therefore has no .map entries.
 const distFiles = [
-  "errors", "httpClient", "index", "recordedCheckPresentation", "server", "toolDefinition", "types",
+  "errors", "executionAdmission", "httpClient", "index", "recordedCheckPresentation", "server", "toolDefinition", "types",
+  "sdk/runAdmission", "sdk/runAuthorizationBoundary", "sdk/types",
   "tools/arms", "tools/executions", "tools/modelSources", "tools/proposals",
   "tools/receipts", "tools/registry",
 ].flatMap((base) => [`dist/${base}.js`, `dist/${base}.d.ts`]);

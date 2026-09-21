@@ -1,4 +1,5 @@
 import { withCheckPresentation } from "../recordedCheckPresentation.js";
+import { settleRunAdmissionFromReceipt } from "../executionAdmission.js";
 import { assertRequiredPresent } from "../toolDefinition.js";
 /**
  * `solver_receipt` -> `GET /v1/receipts/{execution_id}`.
@@ -17,10 +18,19 @@ export const receiptTool = {
     },
     async handler(args, context) {
         assertRequiredPresent("solver_receipt", receiptTool.inputSchema, args);
+        const executionId = String(args.execution_id);
         const outcome = await context.backend.request({
             method: "GET",
-            path: `receipts/${encodeURIComponent(String(args.execution_id))}`,
+            path: `receipts/${encodeURIComponent(executionId)}`,
         });
+        const totals = outcome && typeof outcome === "object" ? outcome.totals : undefined;
+        if (totals && typeof totals === "object") {
+            const usd = totals.usd;
+            const platformFee = totals.platform_fee_usd;
+            if (typeof usd === "number" && Number.isFinite(usd) && typeof platformFee === "number" && Number.isFinite(platformFee)) {
+                await settleRunAdmissionFromReceipt({ executionId, chargedUsd: usd + platformFee, receipt: outcome });
+            }
+        }
         return withCheckPresentation(outcome);
     },
 };

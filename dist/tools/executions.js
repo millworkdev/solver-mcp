@@ -1,4 +1,5 @@
 import { BASELINE_REFUSAL_MESSAGE, withCheckPresentation, withCheckPresentationFromReceipt } from "../recordedCheckPresentation.js";
+import { submitWithRunAdmission } from "../executionAdmission.js";
 import { assertRequiredPresent, ToolInputError } from "../toolDefinition.js";
 /**
  * The three live execution tools. Their inputSchemas mirror the backend's
@@ -97,12 +98,18 @@ export const submitTool = {
         if (context.refuseBaselineSubmit === true && baselineSelected) {
             throw new ToolInputError(BASELINE_REFUSAL_MESSAGE);
         }
-        const outcome = await context.backend.request({
-            method: "POST",
-            path: "executions",
-            body,
-            idempotencyKey,
-        });
+        const outcome = echoSelected
+            ? await context.backend.request({
+                method: "POST",
+                path: "executions",
+                body,
+                idempotencyKey,
+            })
+            : await submitWithRunAdmission({
+                backend: context.backend,
+                request: body,
+                replayKey: idempotencyKey,
+            });
         return withCheckPresentation(outcome, {
             baselineSelected,
             platformTestSelected: omittedVerifier && echoSelected,

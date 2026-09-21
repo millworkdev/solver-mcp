@@ -94,6 +94,14 @@ const forbiddenPatterns = [
 // public reader at material that is not public.
 const pathReferencePattern = /(?:\.\.?\/)*[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+\.[A-Za-z]{1,5}\b/g;
 
+// Absolute host paths the product names on purpose. These are locations on the
+// machine running the server, not files this repository could ever ship, so
+// the "does it exist here?" rule does not apply to them. Each is listed
+// exactly, with its leading slash: a repository-relative lookalike still fails.
+const allowedHostPaths = [
+  "/etc/millwork/run-authorization-boundary.json",
+];
+
 
 for (const path of textFiles) {
   const raw = readFileSync(resolve(repositoryRoot, path), "utf8");
@@ -116,6 +124,30 @@ for (const path of textFiles) {
   for (const referenceMatch of text.matchAll(pathReferencePattern)) {
     const reference = referenceMatch[0];
     if (referenceMatch.index > 0 && text[referenceMatch.index - 1] === "@") continue;
+    // Only when the match is the whole of one of those exact absolute paths,
+    // compared as a complete token. A slash must immediately precede it, and
+    // what follows depends on where the token sits:
+    //   - inside a quoted string (the slash is preceded by a quote), the very
+    //     next character must be that same closing quote: the literal is the
+    //     whole file name, and "boundary.json:" is a different file name;
+    //   - in prose (the slash is preceded by the start of the text, whitespace
+    //     or an opening bracket), the token must end at whitespace or the end
+    //     of the text, allowing up to two characters of sentence punctuation
+    //     or closing brackets before that ("... boundary.json." / "(...json).");
+    //   - anywhere else, whitespace or the end of the text must follow directly.
+    const tokenStart = referenceMatch.index - 1;
+    const tokenEnd = referenceMatch.index + reference.length;
+    const before = tokenStart > 0 ? text[tokenStart - 1] : "";
+    const following = text.slice(tokenEnd, tokenEnd + 3);
+    let closed;
+    if (before === '"' || before === "'" || before === "`") {
+      closed = following[0] === before;
+    } else if (before === "" || /[\s(\[]/.test(before)) {
+      closed = /^[.,;:!?)\]]{0,2}(?:$|\s)/.test(following);
+    } else {
+      closed = /^(?:$|\s)/.test(following);
+    }
+    if (closed && allowedHostPaths.some((hostPath) => hostPath === `/${reference}` && text[tokenStart] === "/")) continue;
     const fromRoot = resolve(repositoryRoot, reference);
     const fromFile = resolve(repositoryRoot, dirname(path), reference);
     // Containment before existence: a relative reference can escape the root,

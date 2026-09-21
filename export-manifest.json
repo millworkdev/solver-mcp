@@ -4,10 +4,10 @@
     "exclude *.map",
     "strip map-reference comment lines from *.js",
     "apply the private export recipe's single-line replacement table in order",
-    "remove the private tenant-template module and its five registry entries, then verify the 20-tool public surface"
+    "remove the private tenant-template and verifier modules and their unpublished registry entries, replace unpublished verifier names in server.js instructions, then verify the 20-tool public surface"
   ],
   "aggregate_digest_formula": "sha256 over the sorted lines '<sha256>  ./<path relative to dist>\\n' of every exported file",
-  "file_count": 24,
+  "file_count": 26,
   "files": [
     {
       "path": "dist/errors.d.ts",
@@ -27,23 +27,31 @@
     },
     {
       "path": "dist/index.d.ts",
-      "sha256": "c68f772ed8f8b8d6e67e9e0a95a752b04371df5bd619fdf03829bace25b72d00"
+      "sha256": "957b273262b5367ce5cb2f36b8dd13eb3e563aed0408cf5d70eb86ea8d9b6493"
     },
     {
       "path": "dist/index.js",
-      "sha256": "848499a3688c267924a35361d5da01c142f767927d04945af2f21e78b8ed20f9"
+      "sha256": "8415ca26a13628e8e8a961e7ffffaaa0b0bd91ad26a5159c13af113d89e5e1fc"
+    },
+    {
+      "path": "dist/recordedCheckPresentation.d.ts",
+      "sha256": "968244b4127511c5da887cd837dd588495c54b92a789c412063e9799e55bab90"
+    },
+    {
+      "path": "dist/recordedCheckPresentation.js",
+      "sha256": "9a8f3f25ba341e95b39efcc9a74216a6b3ed8205b413e5628fc1c9f985b39a68"
     },
     {
       "path": "dist/server.d.ts",
-      "sha256": "632b8b7885d06c263ecbe870e0a9db60b7ed749dda96b8c8d8702659662336df"
+      "sha256": "eb05444070fd43b67582418ffd5bf9923c784501c26932df58dd260a6833b954"
     },
     {
       "path": "dist/server.js",
-      "sha256": "ea562a3f0c1ea4bff6127d27d0c254834ad721a8d11408604ec556cf238c3f44"
+      "sha256": "543c05bd7b29e8092b1ebe3b529a304686d8de417dbd91aff5efb631ec223756"
     },
     {
       "path": "dist/toolDefinition.d.ts",
-      "sha256": "0318aa1d9cceb4ca907d67fe74cfac9529ce17a3d611e9eb4a9a7e532c63b4e3"
+      "sha256": "cec4707ed101166fba132de6539b844c008a7611412194f975676e5cbb89e71b"
     },
     {
       "path": "dist/toolDefinition.js",
@@ -63,7 +71,7 @@
     },
     {
       "path": "dist/tools/executions.js",
-      "sha256": "8656821d3ef2d1ca868eabe3a66ce22239c1ff7a7faecc0269252c103493f0f3"
+      "sha256": "80499f76c5c01c9e21852e49a807d2f560d30e75de18cacf7ab8c382f0e144e9"
     },
     {
       "path": "dist/tools/modelSources.d.ts",
@@ -87,15 +95,15 @@
     },
     {
       "path": "dist/tools/receipts.js",
-      "sha256": "ecf75e86efc72e5bcfbfbf70c7f065f489bf956662c61b705997be0832e981e1"
+      "sha256": "341928173fd56f9983e338dfc9fc277edca9a243072f7721daa44a033b5fa29d"
     },
     {
       "path": "dist/tools/registry.d.ts",
-      "sha256": "c9b9ffd6bd24449d4b7e590d3cd0c8c70d61091ccd314a9a65ab8d96739e30bf"
+      "sha256": "a67006558f873e2b21f59552c4bfa1a662099ce59ffb0efa61bfd2754772babe"
     },
     {
       "path": "dist/tools/registry.js",
-      "sha256": "e98ded948314e26896701c1ee26e4da8d2968c2814b17c40da363127b6839eae"
+      "sha256": "b73a6b87f934b4799447f81b24dc9b219f2ff88a901b69fb5b799e3d33a0f31c"
     },
     {
       "path": "dist/types.d.ts",
@@ -106,5 +114,5 @@
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "429fa76d48aeaab2cd2824f6eb97adf4cd231f75abd2ee9afec813cb7cd81c85"
+  "aggregate_sha256": "974cd03bb99188833adb5c51270948623a2b8c950374b9fed13db0fccd7736e8"
 }

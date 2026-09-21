@@ -14,4 +14,8 @@ export declare const MILLWORK_WORKFLOW_INSTRUCTIONS: string;
  * entrypoint (dist/index.js) attaches stdio. Keeping them separate lets a test
  * (or a future remote transport) construct the server without owning stdio.
  */
-export declare function buildSolverMcpServer(backendOptions: SolverBackendOptions): Server;
+export interface SolverMcpServerOptions {
+    /** J-D2 option. Off by default so published agents keep working. */
+    refuseBaselineSubmit?: boolean;
+}
+export declare function buildSolverMcpServer(backendOptions: SolverBackendOptions, serverOptions?: SolverMcpServerOptions): Server;

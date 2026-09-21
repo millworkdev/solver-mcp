@@ -23,6 +23,19 @@ Or run it directly:
 npx --yes @millwork/solver-mcp --help
 ```
 
+## Connect an output check
+
+This package cannot register an output check. Install `@millwork/solver` for
+the `millwork` CLI, then run the noninteractive public connect:
+
+```bash
+npm install --global @millwork/solver
+millwork verifier connect --endpoint <https-url> --access public --name <name> --version <version> --connect-only --json
+```
+
+Pass the returned `verifier_id` into `solver_submit`. Connecting a check is
+not approval to run a task.
+
 ## Configure stdio
 
 Point the MCP client at the `solver-mcp` binary with no arguments. Supply
@@ -35,6 +48,7 @@ support report.
 | `SOLVERAPI_API_KEY` | yes | Tenant API key held by the server process and sent as bearer authentication. |
 | `SOLVERAPI_BASE_URL` | yes | API base including `/v1`; the production value is `https://api.getmillwork.dev/v1`. |
 | `SOLVERAPI_MAX_RETRIES` | no | Network/5xx retry limit. Default: `2`. It never widens the safe retry boundary. |
+| `SOLVERAPI_REFUSE_BASELINE_SUBMIT` | no | When `1` or `true`, a live `solver_submit` without `verifier_id` is refused. Echo is not refused. Default: off. |
 | `SOLVERAPI_RETRY_BACKOFF_MS` | no | Exponential-backoff base in milliseconds. Default: `500`. |
 
 The transport contract is exact:

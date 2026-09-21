@@ -13,8 +13,9 @@ Required environment:
   SOLVERAPI_BASE_URL    Solver API base URL, including /v1
 
 Optional environment:
-  SOLVERAPI_MAX_RETRIES       Network/5xx retry count (default: 2)
-  SOLVERAPI_RETRY_BACKOFF_MS  Retry backoff base in milliseconds (default: 500)
+  SOLVERAPI_MAX_RETRIES              Network/5xx retry count (default: 2)
+  SOLVERAPI_RETRY_BACKOFF_MS         Retry backoff base in milliseconds (default: 500)
+  SOLVERAPI_REFUSE_BASELINE_SUBMIT   When 1 or true, a live solver_submit without verifier_id is refused (default: off)
 
 Options:
   -h, --help            Show this help text
@@ -45,12 +46,21 @@ function readBackendOptionsFromEnv() {
         retryBackoffMs: retryBackoffMs !== undefined ? Number(retryBackoffMs) : undefined,
     };
 }
+/** J-D2: only "1" or "true" enable refusal. Unset, empty, and any other value stay off. */
+function readRefuseBaselineSubmitFromEnv() {
+    const value = process.env.SOLVERAPI_REFUSE_BASELINE_SUBMIT;
+    if (value === undefined)
+        return false;
+    return value === "1" || value.toLowerCase() === "true";
+}
 async function main() {
     if (process.argv.slice(2).some((argument) => argument === "--help" || argument === "-h")) {
         process.stdout.write(HELP_TEXT);
         return;
     }
-    const server = buildSolverMcpServer(readBackendOptionsFromEnv());
+    const server = buildSolverMcpServer(readBackendOptionsFromEnv(), {
+        refuseBaselineSubmit: readRefuseBaselineSubmitFromEnv(),
+    });
     const transport = new StdioServerTransport();
     await server.connect(transport);
     // stdout is the MCP protocol channel over stdio -- diagnostics must go to

@@ -1,3 +1,4 @@
+import { BASELINE_REFUSAL_MESSAGE, withCheckPresentation, withCheckPresentationFromReceipt } from "../recordedCheckPresentation.js";
 import { assertRequiredPresent, ToolInputError } from "../toolDefinition.js";
 /**
  * The three live execution tools. Their inputSchemas mirror the backend's
@@ -89,11 +90,22 @@ export const submitTool = {
         if (typeof idempotencyKey !== "string" || idempotencyKey.trim().length === 0) {
             throw new ToolInputError('solver_submit: "idempotency_key" must be a non-empty caller-owned value.');
         }
-        return context.backend.request({
+        const echoSelected = body.mode === "echo";
+        const omittedVerifier = typeof body.verifier_id !== "string" || body.verifier_id.trim().length === 0;
+        // Echo is the platform test, not the output-presence baseline.
+        const baselineSelected = omittedVerifier && !echoSelected;
+        if (context.refuseBaselineSubmit === true && baselineSelected) {
+            throw new ToolInputError(BASELINE_REFUSAL_MESSAGE);
+        }
+        const outcome = await context.backend.request({
             method: "POST",
             path: "executions",
             body,
             idempotencyKey,
+        });
+        return withCheckPresentation(outcome, {
+            baselineSelected,
+            platformTestSelected: omittedVerifier && echoSelected,
         });
     },
 };
@@ -109,10 +121,14 @@ export const statusTool = {
     },
     async handler(args, context) {
         assertRequiredPresent("solver_status", statusTool.inputSchema, args);
-        return context.backend.request({
+        const outcome = await context.backend.request({
             method: "GET",
             path: `executions/${encodeURIComponent(String(args.execution_id))}`,
         });
+        return withCheckPresentationFromReceipt(outcome, () => context.backend.request({
+            method: "GET",
+            path: `receipts/${encodeURIComponent(String(args.execution_id))}`,
+        }));
     },
 };
 /** `solver_cancel` -> `POST /v1/executions/{id}/cancel`. */
@@ -144,9 +160,13 @@ export const resultTool = {
     },
     async handler(args, context) {
         assertRequiredPresent("solver_result", resultTool.inputSchema, args);
-        return context.backend.request({
+        const outcome = await context.backend.request({
             method: "GET",
             path: `executions/${encodeURIComponent(String(args.execution_id))}/result`,
         });
+        return withCheckPresentationFromReceipt(outcome, () => context.backend.request({
+            method: "GET",
+            path: `receipts/${encodeURIComponent(String(args.execution_id))}`,
+        }));
     },
 };

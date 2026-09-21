@@ -17,6 +17,11 @@ export interface JsonSchema {
 /** Everything a tool handler needs: the single authenticated backend client. */
 export interface ToolContext {
     backend: SolverBackendClient;
+    /**
+     * J-D2 server option, off by default. When true, solver_submit without a
+     * verifier_id is refused locally instead of running the output-presence baseline.
+     */
+    refuseBaselineSubmit?: boolean;
 }
 /**
  * MCP tool annotations are client-side hints only. The server still enforces

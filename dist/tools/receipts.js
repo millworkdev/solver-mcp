@@ -1,3 +1,4 @@
+import { withCheckPresentation } from "../recordedCheckPresentation.js";
 import { assertRequiredPresent } from "../toolDefinition.js";
 /**
  * `solver_receipt` -> `GET /v1/receipts/{execution_id}`.
@@ -16,9 +17,10 @@ export const receiptTool = {
     },
     async handler(args, context) {
         assertRequiredPresent("solver_receipt", receiptTool.inputSchema, args);
-        return context.backend.request({
+        const outcome = await context.backend.request({
             method: "GET",
             path: `receipts/${encodeURIComponent(String(args.execution_id))}`,
         });
+        return withCheckPresentation(outcome);
     },
 };

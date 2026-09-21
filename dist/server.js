@@ -25,20 +25,12 @@ export const MILLWORK_WORKFLOW_INSTRUCTIONS = [
     "Before disconnecting, identify the provider connection and affected saved models and get approval. Disconnecting disables the Millwork connection and its saved models; it does not revoke the provider's key or cancel calls already sent.",
     "For AWS Bedrock, use a short-term Bedrock API key for the normal API-key setup. Generate it in the AWS account and source Region the user intends to use. Leave Region blank only when the key was generated in us-east-1; otherwise enter its generation Region. " +
         "Region identifies where requests enter Bedrock and is not a data-residency guarantee. STS is a separate advanced setup choice; do not request STS fields or an inference-profile ARN for the API-key path.",
+    // The public export replaces the following sentence in server.js before the deny-scan.
+    "To attach a credential-less output check, use the installed @millwork/solver CLI: millwork verifier connect --endpoint <https-url> --access public --name <name> --version <version> --connect-only --json. For a protected check, use millwork verifier connect --endpoint <https-url> --access managed --name <name> --version <version> --stop-days 90 --connect-only --json (choose another supported stop period when needed), then open the returned continue_url and enter the key only on Millwork's private page. Never ask the user to paste an adapter secret or account key into a tool call. A failed contract is never ready. Connecting a check is not approval to run a task. Omit verifier_id on solver_submit only for the built-in output-presence baseline, which is not semantic verification. Protected adapter-key setup stays on Millwork's private browser page; the public MCP tools do not accept the key.",
 ].join("\n\n");
-/**
- * Assembles the MCP server: one authenticated backend client shared by every
- * tool (the server documentation -- "the MCP server authenticates once... every
- * tool call inherits that tenant scope"), a ListTools handler that advertises
- * the registry's literal inputSchemas, and a CallTool dispatcher that runs
- * the matching handler and maps any thrown error to the MCP error model.
- *
- * This builds the wired `Server` but does NOT connect a transport -- the
- * entrypoint (dist/index.js) attaches stdio. Keeping them separate lets a test
- * (or a future remote transport) construct the server without owning stdio.
- */
-export function buildSolverMcpServer(backendOptions) {
+export function buildSolverMcpServer(backendOptions, serverOptions = {}) {
     const backend = new SolverBackendClient(backendOptions);
+    const refuseBaselineSubmit = serverOptions.refuseBaselineSubmit === true;
     const server = new Server({ name: "@millwork/solver-mcp", version: MCP_SERVER_VERSION }, { capabilities: { tools: {} }, instructions: MILLWORK_WORKFLOW_INSTRUCTIONS });
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
         tools: allTools.map((tool) => ({
@@ -55,7 +47,7 @@ export function buildSolverMcpServer(backendOptions) {
         }
         const args = (request.params.arguments ?? {});
         try {
-            const result = await tool.handler(args, { backend });
+            const result = await tool.handler(args, { backend, refuseBaselineSubmit });
             return {
                 content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
                 structuredContent: result,

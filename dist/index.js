@@ -17,6 +17,10 @@ Optional environment:
   SOLVERAPI_RETRY_BACKOFF_MS         Retry backoff base in milliseconds (default: 500)
   SOLVERAPI_REFUSE_BASELINE_SUBMIT   When 1 or true, a live solver_submit without verifier_id is refused (default: off)
 
+Paid-run authorization:
+  Live solver_submit uses the fixed host-attested boundary at /etc/millwork/run-authorization-boundary.json.
+  No environment variable or tool argument can select or widen that authority. Echo submissions are free.
+
 Options:
   -h, --help            Show this help text
 `;

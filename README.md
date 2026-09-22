@@ -87,6 +87,13 @@ Human confirmation is a client-side stop. The tenant API key still carries the
 server-side permissions assigned to it. Confirmation does not turn a
 tenant-wide machine key into a narrower credential.
 
+A live `solver_submit` also requires the supported host-isolation profile. The
+host, not the prompt or launch environment, owns the fixed attestation,
+read-only admission ledger, and exact one-run approval channel. The first call
+can return `host_approval_required`; after the host writes the returned approval
+document to the named host-owned file, retry the exact same tool arguments and
+idempotency key. Echo submissions remain free and do not require this approval.
+
 ## Tool surface
 
 The server registers exactly 20 `solver_*` tools; `tools/list` over stdio is

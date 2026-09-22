@@ -13,6 +13,31 @@ export type ArmKind = "model" | "agent" | "skill";
 export type ArmStatus = "ready" | "degraded" | "disabled";
 export type CostClass = "economy" | "standard" | "premium";
 export type DataClass = "public" | "sandbox" | "tenant_internal";
+export interface ExecutionRequest {
+    task: {
+        objective: string;
+        inputs_ref?: {
+            kind: "url_list" | "url" | "inline_json";
+            url?: string;
+            json?: Record<string, unknown>;
+        };
+    };
+    policy: {
+        data_classes: DataClass[];
+        budget: {
+            max_cost_usd: number;
+            max_runtime_s: number;
+        };
+        cost_coefficient?: number;
+        on_eval?: Array<"gate" | "fallback" | "repair_retry">;
+    };
+    verifier_id?: string;
+    mode?: "live" | "echo";
+    routing?: {
+        required_arm_id: string;
+    };
+    compose?: "auto";
+}
 export interface ArmEndpoint {
     url: string;
     auth_ref: string;

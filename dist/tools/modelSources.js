@@ -204,7 +204,7 @@ export const listModelCatalogTool = {
     description: "Read the models this organization can use and their exact arm_registration_template " +
         "(GET /v1/model-catalog). After refreshing a provider connection, choose only an entry whose " +
         "connection.connection_id matches that tested connection. Let the user choose the model, then " +
-        "copy its template fields unchanged into solver_enable_model_arm; kind=model is supplied by that tool. " +
+        "copy its template fields into solver_enable_model_arm, changing only an explicitly approved display name or certified capability/data-class narrowing; kind=model is supplied by that tool and idempotency_key remains transport metadata. " +
         "An empty catalog is not permission to guess registration settings or switch providers.",
     inputSchema: { type: "object", properties: {} },
     async handler(_args, context) {

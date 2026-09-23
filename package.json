@@ -1,6 +1,6 @@
 {
   "name": "@millwork/solver-mcp",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Millwork Solver execution MCP server -- the solver_* tools over stdio.",
   "keywords": [
     "mcp",

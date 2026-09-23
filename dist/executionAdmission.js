@@ -37,7 +37,7 @@ function modelForArm(catalog, arm) {
         return null;
     return catalog.models.find((entry) => entry.deployment?.model_deployment_id === deploymentId) ?? null;
 }
-function admissionFacts(input) {
+export function deriveRunAdmissionFacts(input) {
     const accountId = nonEmptyString(input.account.tenant_id);
     const armId = nonEmptyString(input.arm.arm_id);
     const model = modelForArm(input.catalog, input.arm);
@@ -134,7 +134,7 @@ export async function submitWithRunAdmission(input) {
         input.backend.request({ method: "GET", path: `arms/${encodeURIComponent(armId)}` }),
         input.backend.request({ method: "GET", path: "model-catalog" }),
     ]);
-    const { preview, costReview } = admissionFacts({ account, arm, catalog, request: input.request });
+    const { preview, costReview } = deriveRunAdmissionFacts({ account, arm, catalog, request: input.request });
     const admission = new RunAdmissionStore({ boundary: resolution.boundary });
     let grant;
     try {

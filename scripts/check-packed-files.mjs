@@ -18,7 +18,7 @@ const distFiles = [
   "errors", "executionAdmission", "httpClient", "index", "recordedCheckPresentation", "server", "toolDefinition", "types",
   "sdk/runAdmission", "sdk/runAuthorizationBoundary", "sdk/types",
   "tools/arms", "tools/executions", "tools/modelSources", "tools/proposals",
-  "tools/receipts", "tools/registry",
+  "tools/receipts", "tools/registry", "tools/verifiers",
 ].flatMap((base) => [`dist/${base}.js`, `dist/${base}.d.ts`]);
 const allowedPackedFiles = ["LICENSE", "README.md", "package.json", ...distFiles].sort();
 

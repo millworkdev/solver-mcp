@@ -10,7 +10,8 @@ not accept source contributions.
 ## Prepared export
 
 The tree is a prepared export for the next candidate version, derived from
-the published, immutable `@millwork/solver-mcp@0.1.0` registry artifact:
+the current 33-tool engineering source. It retains 28 public tools and
+excludes five private tenant-template tools:
 
 - documentation comments in `dist/` were sanitized to remove references to
   files that do not ship in the package and internal planning identifiers;
@@ -21,11 +22,11 @@ the published, immutable `@millwork/solver-mcp@0.1.0` registry artifact:
   and repository-only scripts were pruned from the manifest;
 - the `README.md` describes the published package as installed from the
   registry, not any private working layout;
-- the version advanced to `0.2.7`, because published versions are immutable
+- the version advanced to `0.2.8`, because published versions are immutable
   and are never republished — `0.1.0` predates this repository and stays
   exactly as published, without a provenance attestation, `0.1.1`
   through `0.1.4` are published or reserved by the release drill plan,
-  `0.2.0`, `0.2.2`, `0.2.3`, `0.2.4`, `0.2.5` and `0.2.6` stay exactly as
+  `0.2.0`, `0.2.2`, `0.2.3`, `0.2.4`, `0.2.5`, `0.2.6` and `0.2.7` stay exactly as
   published, and `0.2.1` is reserved;
 - package metadata carries search keywords, so the package is findable by
   what it does and not only by its exact name.
@@ -62,7 +63,7 @@ Every pull request and push to `main` runs
 - `scripts/smoke-installed.mjs` — packs the tree, installs the tarball into
   a clean directory on Node 20 and 22, checks `solver-mcp --help`, and
   drives a real stdio `initialize` + `tools/list`, requiring the exact
-  20-name tool surface pinned in `scripts/expected-tool-surface.json` with
+  28-name tool surface pinned in `scripts/expected-tool-surface.json` with
   public wording; `scripts/test-tool-surface.mjs` proves the comparison
   catches renames, additions, removals, and duplicates;
 - `scripts/test-publish-preconditions.sh` — offline cases for the

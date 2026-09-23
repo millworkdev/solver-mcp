@@ -4,10 +4,10 @@
     "exclude *.map",
     "strip map-reference comment lines from *.js",
     "apply the private export recipe's single-line replacement table in order",
-    "remove the private tenant-template and verifier modules and their unpublished registry entries, replace unpublished verifier names in server.js instructions, then verify the 20-tool public surface"
+    "remove the private tenant-template module and its unpublished registry entries, then verify the 28-tool public surface"
   ],
   "aggregate_digest_formula": "sha256 over the sorted lines '<sha256>  ./<path relative to dist>\\n' of every exported file",
-  "file_count": 34,
+  "file_count": 36,
   "files": [
     {
       "path": "dist/errors.d.ts",
@@ -19,11 +19,11 @@
     },
     {
       "path": "dist/executionAdmission.d.ts",
-      "sha256": "0037dce3bf7ff5c2d07d680a6b9077e378821bd501f592755cb9103cdf34df5d"
+      "sha256": "491f9c0c03c6efad2aad1ed55031ff6d8abf9083501f02225484f071e54e0df6"
     },
     {
       "path": "dist/executionAdmission.js",
-      "sha256": "a09c028c1ba8d617e164257ca0701f5ac2063f0e212783513e3eed48370438d8"
+      "sha256": "0a54e5f63450a7934eea609c7634d16c16cf29f277d51958cf1adaa4f3ab2306"
     },
     {
       "path": "dist/httpClient.d.ts",
@@ -67,7 +67,7 @@
     },
     {
       "path": "dist/sdk/types.d.ts",
-      "sha256": "bf8cd2d2897b1d05aff494633dee0ecf957a37dcd65b898554893b9616a30ab4"
+      "sha256": "d735680401ede1db12f236a2741f3c40eb32945ce2454d1f2c64a3335a21eafb"
     },
     {
       "path": "dist/sdk/types.js",
@@ -79,7 +79,7 @@
     },
     {
       "path": "dist/server.js",
-      "sha256": "385b1faa9289be8b5a53473e0ec3ec2098ae62bc362cde3651a30410c5d82bfa"
+      "sha256": "bdeea6749d974fc9c02d6409812d4592c65801625ecdde172cba205f81bd11e8"
     },
     {
       "path": "dist/toolDefinition.d.ts",
@@ -135,16 +135,24 @@
     },
     {
       "path": "dist/tools/registry.js",
-      "sha256": "500ab4ab70823c28cf4a333adf7be4c7ba8158552a45d8aa58ac88cf32cbf149"
+      "sha256": "6dc970efdc8fc4ec2ae62aae48a9f6fdc0de6a60143df08362f78bb135e22343"
+    },
+    {
+      "path": "dist/tools/verifiers.d.ts",
+      "sha256": "dbd8964dc8b6a964452e759452a7464f85663be7981b1d49a33c354fa684b8e7"
+    },
+    {
+      "path": "dist/tools/verifiers.js",
+      "sha256": "281888247a4a0971aba0e7a7b10da26350bec9b71c76b99f4035b372f3940181"
     },
     {
       "path": "dist/types.d.ts",
-      "sha256": "7b828b3ef92138256bf9665821562e5797590e47459fa28fd05493d901f10b5a"
+      "sha256": "b4f3fbad22aa8fa0dd4596bff0e1e3fa052bfc2a3336c2f8b625a6cc474b1c5a"
     },
     {
       "path": "dist/types.js",
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "d2078f3ab08525f5e3cb66677d75752ab12d2371e4f86d954b3e3a64ac523256"
+  "aggregate_sha256": "a504ac595924d3c1a641e419dbd293d684a5572cc5698c1ab7f00d32793385d8"
 }

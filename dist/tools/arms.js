@@ -114,10 +114,11 @@ export const listArmsTool = {
 export const enableModelArmTool = {
     name: "solver_enable_model_arm",
     description: "Save the exact catalog model the user chose from the just-tested provider connection (POST /v1/arms with kind=model and model_deployment_id). " +
-        "Read solver_list_model_catalog, confirm the entry's connection.connection_id matches that connection, and copy its arm_registration_template fields unchanged except kind=model, which this tool supplies. Keep that connection_id with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
+        "Read solver_list_model_catalog, confirm the exact route, and pass only policy values contained by its current arm_registration_template; kind=model is supplied here. " +
+        "idempotency_key is required for same-principal, same-request retries and is sent as the HTTP Idempotency-Key header, never in the body. Keep the route identity with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
     inputSchema: {
         type: "object",
-        required: ["model_deployment_id", "display_name", "capability_tags", "data_class_grants", "cost_class"],
+        required: ["model_deployment_id", "display_name", "capability_tags", "data_class_grants", "cost_class", "idempotency_key"],
         additionalProperties: false,
         properties: {
             model_deployment_id: { type: "string", description: "Exact catalog model deployment chosen by the user after matching its connection_id to the just-tested provider connection." },
@@ -125,14 +126,21 @@ export const enableModelArmTool = {
             capability_tags: { type: "array", items: { type: "string" } },
             data_class_grants: { type: "array", items: { type: "string", enum: ["public", "sandbox", "tenant_internal"] } },
             cost_class: costClassEnum,
+            idempotency_key: {
+                type: "string",
+                minLength: 1,
+                description: "Caller-owned request-bound operation key. Reuse only for the same principal, issuing transport, and exact registration request.",
+            },
         },
     },
     async handler(args, context) {
         assertRequiredPresent("solver_enable_model_arm", enableModelArmTool.inputSchema, args);
+        const { idempotency_key, ...registration } = args;
         return context.backend.request({
             method: "POST",
             path: "arms",
-            body: { kind: "model", ...args },
+            body: { kind: "model", ...registration },
+            idempotencyKey: idempotency_key,
         });
     },
 };

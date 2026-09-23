@@ -1,11 +1,5 @@
-// Deterministic public-side verification of the export manifest: every file
-// under dist/ must match its manifest SHA-256, the file sets must be equal,
-// and the aggregate digest must equal the documented formula recomputed from
-// the actual bytes. Anyone can rerun this against the tree; a reviewer with
-// access to the canonical source can additionally rerun the private export
-// recipe and confirm it reproduces this exact manifest.
-//
-// Run: node scripts/check-export-manifest.mjs
+// Verify every committed public dist byte against the generated closed-world
+// export manifest, including its aggregate digest.
 
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -36,8 +30,8 @@ const actualFiles = listFiles(join(repositoryRoot, "dist"))
     sha256: createHash("sha256").update(readFileSync(path)).digest("hex"),
   }))
   .sort((left, right) => left.path.localeCompare(right.path));
-
 const manifestFiles = [...manifest.files].sort((left, right) => left.path.localeCompare(right.path));
+
 if (JSON.stringify(actualFiles) !== JSON.stringify(manifestFiles)) {
   const actualByPath = new Map(actualFiles.map((file) => [file.path, file.sha256]));
   const manifestByPath = new Map(manifestFiles.map((file) => [file.path, file.sha256]));
@@ -53,15 +47,16 @@ if (manifest.file_count !== actualFiles.length) {
   failures.push(`manifest file_count ${manifest.file_count} does not match ${actualFiles.length} actual files`);
 }
 
-// Recompute the aggregate digest exactly per the documented formula.
-const digestText = actualFiles.map((file) => `${file.sha256}  ./${file.path.replace(/^dist\//, "")}\n`).join("");
+const digestText = actualFiles
+  .map((file) => `${file.sha256}  ./${file.path.replace(/^dist\//, "")}\n`)
+  .join("");
 const aggregate = createHash("sha256").update(digestText).digest("hex");
 if (aggregate !== manifest.aggregate_sha256) {
   failures.push(`aggregate digest mismatch: recomputed ${aggregate}, manifest ${manifest.aggregate_sha256}`);
 }
 
 if (failures.length > 0) {
-  process.stderr.write(failures.map((failure) => `FAIL ${failure}`).join("\n") + "\n");
+  process.stderr.write(`${failures.map((failure) => `FAIL ${failure}`).join("\n")}\n`);
   process.exit(1);
 }
 process.stdout.write(`export manifest ok (${actualFiles.length} files, aggregate ${aggregate})\n`);

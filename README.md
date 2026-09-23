@@ -1,7 +1,7 @@
 # @millwork/solver-mcp
 
 `@millwork/solver-mcp` is the Millwork Solver execution MCP server. It gives an
-approved assistant 20 tenant-authenticated `solver_*` tools over stdio. Some
+approved assistant 28 tenant-authenticated `solver_*` tools over stdio. Some
 tools read state. Others connect model sources, submit work, cancel a run, or
 decide a proposal, so the server is write-capable.
 
@@ -25,16 +25,31 @@ npx --yes @millwork/solver-mcp --help
 
 ## Connect an output check
 
-This package cannot register an output check. Install `@millwork/solver` for
-the `millwork` CLI, then run the noninteractive public connect:
+Discover `solver_list_verifiers` first. An empty page without `next_cursor`
+returns a typed `scaffold_output_check` next action. Install
+`@millwork/solver@0.1.17` or later to scaffold and test an output check locally,
+then deploy its HTTPS endpoint.
+The [build-and-connect guide](https://docs.getmillwork.dev/cookbook/output-checks/build-the-dock)
+starts with Recipe 0 and shows the local test, deployment, and recovery path.
+Register a credential-less endpoint with `solver_connect_verifier` and retest with
+`solver_test_verifier`:
 
-```bash
-npm install --global @millwork/solver
-millwork verifier connect --endpoint <https-url> --access public --name <name> --version <version> --connect-only --json
+```text
+solver_connect_verifier({ access: "public", endpoint: "<https-url>",
+  name: "<name>", version: "<version>", idempotency_key: "<caller-owned-id>" })
 ```
 
-Pass the returned `verifier_id` into `solver_submit`. Connecting a check is
-not approval to run a task.
+For a protected endpoint, connect with `access: "managed"`, then use
+`solver_start_verifier_connection` to obtain the private browser handoff.
+Give its `continue_url` only to the intended person, and use
+`solver_inspect_verifier_connection` and
+`solver_continue_verifier_connection` to resume the same operation after
+private key entry. Never put the endpoint key in chat or a tool argument.
+Disconnecting requires separate host confirmation and
+`confirm_disconnect: true`; it stops Millwork's use of the key but does not
+revoke the key at the endpoint. Pass the returned `verifier_id` into
+`solver_submit` only after choosing the check. Connecting a check is not
+approval to run a task.
 
 ## Configure stdio
 
@@ -96,19 +111,20 @@ idempotency key. Echo submissions remain free and do not require this approval.
 
 ## Tool surface
 
-The server registers exactly 20 `solver_*` tools; `tools/list` over stdio is
+The server registers exactly 28 `solver_*` tools; `tools/list` over stdio is
 the authoritative surface, and every tool description states what the tool
 maps to and whether it writes. No tool ever accepts or returns raw credential
-material: connecting a model source is a hosted browser handoff against your
-own provider key/account, and the tools only ever carry an opaque handoff
-intent id.
+material. Provider and protected-verifier setup use private browser handoffs;
+the tools return short-lived continuation URLs and opaque operation references,
+never raw keys.
 
 ## Retry and recovery boundary
 
-The 20 tools divide into:
+The 28 tools divide into:
 
-- 10 safe reads that may retry network and 5xx failures;
-- `solver_submit` and `solver_disconnect_source_connection`, which may retry
+- 13 safe reads that may retry network and 5xx failures;
+- 7 same-key mutations, including `solver_submit` and
+  `solver_disconnect_verifier_connection`, which may retry
   only with the same caller-owned, non-empty idempotency key and the same
   request bytes; and
 - 8 write-capable tools that make one attempt because they expose no

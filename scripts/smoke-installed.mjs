@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compareToolSurface } from "./tool-surface.mjs";
+import { auditVerifierSchemas } from "./verifier-schema-audit.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workDirectory = mkdtempSync(join(tmpdir(), "solver-mcp-smoke-"));
@@ -111,6 +112,8 @@ try {
   const tools = toolsResponse.result.tools;
   const surfaceFindings = compareToolSurface(tools.map((tool) => tool.name));
   if (surfaceFindings.length > 0) fail(`tool surface drifted from the pinned surface: ${surfaceFindings.join("; ")}`);
+  const schemaFindings = auditVerifierSchemas(tools);
+  if (schemaFindings.length > 0) fail(`verifier schema unsafe: ${schemaFindings.join("; ")}`);
   for (const tool of tools) {
     const wording = `${tool.name} ${tool.description ?? ""}`;
     if (supersededJargon.test(wording)) fail(`tool ${tool.name} emits superseded jargon`);

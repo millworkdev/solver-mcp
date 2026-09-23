@@ -4,7 +4,7 @@ import { createSourceConnectionTool, disconnectSourceConnectionTool, listModelDe
 import { proposalsTool, reviewProposalTool } from "./proposals.js";
 import { receiptTool } from "./receipts.js";
 // Private tenant-template imports are excluded from this public release.
-// Private verifier-workflow imports are excluded from this public release.
+import { connectVerifierTool, continueVerifierConnectionTool, disconnectVerifierConnectionTool, inspectVerifierConnectionTool, listVerifiersTool, showVerifierTool, startVerifierConnectionTool, testVerifierTool, } from "./verifiers.js";
 /**
  * The tool set of the server documentation: the original eight, plus the newer
  * model-access chain, the execution result, the connection-disconnect tool,
@@ -41,14 +41,14 @@ export const allTools = [
     // Private tenant-template entry excluded from this public release.
     // Private tenant-template entry excluded from this public release.
     // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
-    // Private tenant-template entry excluded from this public release.
+    listVerifiersTool,
+    showVerifierTool,
+    connectVerifierTool,
+    testVerifierTool,
+    startVerifierConnectionTool,
+    inspectVerifierConnectionTool,
+    continueVerifierConnectionTool,
+    disconnectVerifierConnectionTool,
 ];
 /** Lookup by tool name, for the CallTool dispatcher. */
 export const toolsByName = new Map(allTools.map((tool) => [tool.name, tool]));

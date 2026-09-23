@@ -11,6 +11,7 @@
  */
 export type ArmKind = "model" | "agent" | "skill";
 export type ArmStatus = "ready" | "degraded" | "disabled";
+export type ModelLifecycle = "preview" | "active" | "deprecated" | "retired";
 export type CostClass = "economy" | "standard" | "premium";
 export type DataClass = "public" | "sandbox" | "tenant_internal";
 export interface ExecutionRequest {
@@ -58,6 +59,7 @@ export interface Arm {
     kind: ArmKind;
     display_name: string;
     status: ArmStatus;
+    model_lifecycle?: ModelLifecycle;
     capability_tags: string[];
     data_class_grants: DataClass[];
     cost_class?: CostClass;

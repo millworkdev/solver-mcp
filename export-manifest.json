@@ -51,19 +51,19 @@
     },
     {
       "path": "dist/sdk/runAdmission.d.ts",
-      "sha256": "2d48778a8ed2d934e56926395ee40b50f97955af670be204400b75d47f478cd7"
+      "sha256": "bbb17b913109d91314a9c03112272a38d048ec123aa9a2e0de2ec395e8686392"
     },
     {
       "path": "dist/sdk/runAdmission.js",
-      "sha256": "dd8a35524111b7fea6bde5230ceda3e51647f74e0301301bc640aeb94870229a"
+      "sha256": "b0fa97659bb4c491caf329f902ee4e388146d4585a87b99dbfe86aa110b47d6b"
     },
     {
       "path": "dist/sdk/runAuthorizationBoundary.d.ts",
-      "sha256": "ac733df46fd8dbe7ea0271c2e379d25a1dfec0587f130438fbc32708f337ca97"
+      "sha256": "fa716eb3c17070340bda6b50ed67bc981dc8e8d7bbc820c080aa8e946a6efa6a"
     },
     {
       "path": "dist/sdk/runAuthorizationBoundary.js",
-      "sha256": "2b5b87f243144288fa3c763f9ed508b4cc0191da207b3b356ee9b4913f3d905a"
+      "sha256": "b16c7eee4b0157215877a51914e534c7d7df1c1f13d00217f7ba36e1a2366ecc"
     },
     {
       "path": "dist/sdk/types.d.ts",
@@ -154,5 +154,5 @@
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "2aebd20cccd15944b3df0d949473016e2b7d245da02d7b9324a5d99e8f5cdcb5"
+  "aggregate_sha256": "5572e91bf16cb8224960f1cacbec21d550547e37f9a50155dd41bbf137a6fc0d"
 }

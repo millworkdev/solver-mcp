@@ -40,6 +40,44 @@ function modelForArm(catalog, arm) {
 export function deriveRunAdmissionFacts(input) {
     const accountId = nonEmptyString(input.account.tenant_id);
     const armId = nonEmptyString(input.arm.arm_id);
+    if (input.request.review_composer) {
+        const fee = input.account.billing?.review_composer_fee_usd_per_execution;
+        const platformFee = typeof fee === "number" && Number.isFinite(fee) && fee >= 0 ? fee : null;
+        if (!accountId || !armId || input.arm.kind !== "agent" || input.arm.status !== "ready"
+            || armId !== input.request.review_composer.agent_arm_id) {
+            throw new RunAdmissionActionRequired({
+                state: "action_required",
+                refusal_code: "run_preview_unavailable",
+                detail: "The selected Review Composer agent could not be verified as a ready saved arm. No paid run was submitted.",
+                next_action: { type: "refresh_saved_agent", detail: "Read the saved agent again and use its exact ready arm_id." },
+            });
+        }
+        const preview = previewRunRequest({
+            account_id: accountId,
+            request: input.request,
+            arm_id: armId,
+            provider_id: "agent_endpoint", access_lane: "byok", platform_fee_usd: platformFee,
+        });
+        return {
+            preview,
+            costReview: {
+                arm_id: armId,
+                provider_id: "agent_endpoint",
+                repository: input.request.review_composer.repository,
+                base_ref: input.request.review_composer.base_ref,
+                base_sha: input.request.review_composer.base_sha,
+                sources: input.request.review_composer.sources,
+                combine: input.request.review_composer.combine,
+                data_classes: [...input.request.policy.data_classes],
+                max_runtime_s: input.request.policy.budget.max_runtime_s,
+                platform_fee_usd: platformFee,
+                agent_budget_usd: input.request.policy.budget.max_cost_usd,
+                agent_usage_payer: "customer_agent_account",
+                combined_allowance_usd: preview.declared_maximum_usd,
+                budget_note: "An already-started agent attempt may exceed its usage threshold.",
+            },
+        };
+    }
     const model = modelForArm(input.catalog, input.arm);
     const providerId = nonEmptyString(model?.source?.source_id);
     const accessLane = model?.connection?.access_lane;
@@ -117,12 +155,12 @@ export async function submitWithRunAdmission(input) {
             },
         });
     }
-    const armId = nonEmptyString(input.request.routing?.required_arm_id);
+    const armId = nonEmptyString(input.request.review_composer?.agent_arm_id ?? input.request.routing?.required_arm_id);
     if (!armId) {
         throw new RunAdmissionActionRequired({
             state: "action_required",
             refusal_code: "exact_model_required",
-            detail: "A paid run must name routing.required_arm_id so its exact model, provider, access lane, and charge preview can be authorized. No paid run was submitted.",
+            detail: "A paid run must name routing.required_arm_id, or review_composer.agent_arm_id, so its exact arm and charge preview can be authorized. No paid run was submitted.",
             next_action: {
                 type: "select_exact_saved_model",
                 detail: "Choose a ready saved model from solver_list_arms and call solver_submit again with its arm_id and a new idempotency_key.",
@@ -132,7 +170,9 @@ export async function submitWithRunAdmission(input) {
     const [account, arm, catalog] = await Promise.all([
         input.backend.request({ method: "GET", path: "account" }),
         input.backend.request({ method: "GET", path: `arms/${encodeURIComponent(armId)}` }),
-        input.backend.request({ method: "GET", path: "model-catalog" }),
+        input.request.review_composer
+            ? Promise.resolve({ models: [] })
+            : input.backend.request({ method: "GET", path: "model-catalog" }),
     ]);
     const { preview, costReview } = deriveRunAdmissionFacts({ account, arm, catalog, request: input.request });
     const admission = new RunAdmissionStore({ boundary: resolution.boundary });

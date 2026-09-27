@@ -38,6 +38,25 @@ export interface ExecutionRequest {
         required_arm_id: string;
     };
     compose?: "auto";
+    review_composer?: {
+        version: "v1";
+        repository: string;
+        base_ref: string;
+        base_sha: string;
+        agent_arm_id: string;
+        sources: Array<{
+            id: "coderabbit";
+        } | {
+            id: "github";
+            checks: Array<{
+                workflow_id: number;
+                job_name: string;
+            }>;
+            minimum_approvals: number;
+        }>;
+        combine: "all" | "any";
+        veto_sources: Array<"coderabbit" | "github">;
+    };
 }
 export interface ArmEndpoint {
     url: string;
@@ -97,5 +116,17 @@ export type LifecycleState = "accepted" | "queued" | "running" | "progress" | "c
 export interface Execution {
     execution_id: string;
     status: LifecycleState;
+    decision_packet?: {
+        version: "v1";
+        verdict: "pass" | "block" | "no_verdict";
+        artifact: Record<string, unknown>;
+        sources: Array<{
+            id: "coderabbit" | "github";
+            status: "pass" | "block" | "no_verdict";
+            [extra: string]: unknown;
+        }>;
+        decided_at: string;
+        [extra: string]: unknown;
+    } | null;
     [extra: string]: unknown;
 }

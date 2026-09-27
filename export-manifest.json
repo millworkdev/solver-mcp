@@ -4,7 +4,7 @@
     "exclude *.map",
     "strip map-reference comment lines from *.js",
     "apply the private export recipe's single-line replacement table in order",
-    "remove the private tenant-template module and its unpublished registry entries, then verify the 28-tool public surface"
+    "remove the private tenant-template and Review Composer modules and their unpublished registry entries, then verify the 28-tool public surface"
   ],
   "aggregate_digest_formula": "sha256 over the sorted lines '<sha256>  ./<path relative to dist>\\n' of every exported file",
   "file_count": 36,
@@ -19,11 +19,11 @@
     },
     {
       "path": "dist/executionAdmission.d.ts",
-      "sha256": "491f9c0c03c6efad2aad1ed55031ff6d8abf9083501f02225484f071e54e0df6"
+      "sha256": "06f85c397ba2f274e6180dd975ca8d1f18e8f84a4cbf82199fae7acd3ce69494"
     },
     {
       "path": "dist/executionAdmission.js",
-      "sha256": "0a54e5f63450a7934eea609c7634d16c16cf29f277d51958cf1adaa4f3ab2306"
+      "sha256": "71eec361c2a4d7aa7d29b07177d6ca480637899f7d1cc8a24736055e6f9bee6d"
     },
     {
       "path": "dist/httpClient.d.ts",
@@ -55,7 +55,7 @@
     },
     {
       "path": "dist/sdk/runAdmission.js",
-      "sha256": "b0fa97659bb4c491caf329f902ee4e388146d4585a87b99dbfe86aa110b47d6b"
+      "sha256": "438f43095e5f927996d7b38b396f6fa09bd8fe5b119cafccb705d2ff2cfb86a2"
     },
     {
       "path": "dist/sdk/runAuthorizationBoundary.d.ts",
@@ -67,7 +67,7 @@
     },
     {
       "path": "dist/sdk/types.d.ts",
-      "sha256": "d735680401ede1db12f236a2741f3c40eb32945ce2454d1f2c64a3335a21eafb"
+      "sha256": "c00e7faee81f8073334648444da0047ecee364588aab4b3149cb682f3052235a"
     },
     {
       "path": "dist/sdk/types.js",
@@ -135,7 +135,7 @@
     },
     {
       "path": "dist/tools/registry.js",
-      "sha256": "6dc970efdc8fc4ec2ae62aae48a9f6fdc0de6a60143df08362f78bb135e22343"
+      "sha256": "ac1db3a141423ba2a12cf19f0bbf88d9f756d2d0bb0bb1b044293dea3443c3ba"
     },
     {
       "path": "dist/tools/verifiers.d.ts",
@@ -147,12 +147,12 @@
     },
     {
       "path": "dist/types.d.ts",
-      "sha256": "b4f3fbad22aa8fa0dd4596bff0e1e3fa052bfc2a3336c2f8b625a6cc474b1c5a"
+      "sha256": "b73fcdf65b26783fe66ae5b4b9dbc80fc3f9514018fbff2fec24f65c17aa5097"
     },
     {
       "path": "dist/types.js",
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "5572e91bf16cb8224960f1cacbec21d550547e37f9a50155dd41bbf137a6fc0d"
+  "aggregate_sha256": "debc85bb8d8e4dfab8692b0652be0a0f2ebe8295be1653dfb4297a92377ce77c"
 }

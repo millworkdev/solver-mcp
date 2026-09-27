@@ -5,6 +5,7 @@ interface AccountProjection {
     tenant_id?: unknown;
     billing?: {
         platform_fee_usd_per_execution?: unknown;
+        review_composer_fee_usd_per_execution?: unknown;
     } | null;
 }
 interface ModelCatalog {
@@ -12,6 +13,8 @@ interface ModelCatalog {
 }
 interface SelectedArm {
     arm_id?: unknown;
+    kind?: unknown;
+    status?: unknown;
     model_deployment_id?: unknown;
 }
 export declare class RunAdmissionActionRequired extends Error {

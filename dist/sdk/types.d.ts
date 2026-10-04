@@ -28,6 +28,7 @@ export interface Arm {
     display_name: string;
     status: ArmStatus;
     model_lifecycle?: ModelLifecycle;
+    route_availability?: RouteAvailability;
     capability_tags: string[];
     data_class_grants: DataClass[];
     cost_class?: CostClass;
@@ -852,6 +853,14 @@ export interface ModelDeployment {
 }
 export type SourceKind = "publisher_direct" | "gateway" | "cloud" | "fixture";
 export type ModelLifecycle = "preview" | "active" | "deprecated" | "retired";
+/** Present on a deployment-bound model arm only when its route is not plainly available. */
+export interface RouteAvailability {
+    status: "suspended" | "expired" | "retired" | "quarantined" | "deprecated";
+    reason: "operator_suspended" | "absent_from_feed" | "not_ready" | "claim_expired" | "t2_expired" | "domain_expired" | "drift" | "provider_deprecated";
+    since: string;
+    /** The provider-declared deprecation date; null for every other status. */
+    until: string | null;
+}
 export interface ModelDefinition {
     model_key: string;
     publisher_id: string;
@@ -914,6 +923,11 @@ export interface ModelAttemptProvenance {
         release: string;
         served_variant_id: string;
         upstream_ref: string;
+        /**
+         * Gateway sources only, when the certified offering records one: how the
+         * upstream provider is pinned. Omitted for every other source.
+         */
+        resolution_evidence_ref?: string;
     };
     source: {
         source_id: string;

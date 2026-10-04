@@ -12,6 +12,14 @@
 export type ArmKind = "model" | "agent" | "skill";
 export type ArmStatus = "ready" | "degraded" | "disabled";
 export type ModelLifecycle = "preview" | "active" | "deprecated" | "retired";
+/** Present on a deployment-bound model arm only when its route is not plainly available. */
+export interface RouteAvailability {
+    status: "suspended" | "expired" | "retired" | "quarantined" | "deprecated";
+    reason: "operator_suspended" | "absent_from_feed" | "not_ready" | "claim_expired" | "t2_expired" | "domain_expired" | "drift" | "provider_deprecated";
+    since: string;
+    /** The provider-declared deprecation date; null for every other status. */
+    until: string | null;
+}
 export type CostClass = "economy" | "standard" | "premium";
 export type DataClass = "public" | "sandbox" | "tenant_internal";
 export interface ExecutionRequest {
@@ -79,6 +87,7 @@ export interface Arm {
     display_name: string;
     status: ArmStatus;
     model_lifecycle?: ModelLifecycle;
+    route_availability?: RouteAvailability;
     capability_tags: string[];
     data_class_grants: DataClass[];
     cost_class?: CostClass;

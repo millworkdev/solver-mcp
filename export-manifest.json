@@ -67,7 +67,7 @@
     },
     {
       "path": "dist/sdk/types.d.ts",
-      "sha256": "7bd2f9c593b11fb1c4dbd68c0aedfc1ee00b93f5dcd64d4705d66a8203a74ea4"
+      "sha256": "701cdb64d4ce186af2547f9ec38c737641ff3677a865cbe6fbf8d0dbdbbd2400"
     },
     {
       "path": "dist/sdk/types.js",
@@ -154,5 +154,5 @@
       "sha256": "0a597e89f0657125c8932445e91b2a414d618c62b064e5bec19dd1f84c44b4a7"
     }
   ],
-  "aggregate_sha256": "f128df7f0065b08a23a9bbd3fadd9070ea89841fbe96fedb86ba5aaaaf7570dc"
+  "aggregate_sha256": "3c4b3557f9f8eaa1e0eca403bf75e47fa6467e25480690bbb3b0649358a04e40"
 }

@@ -316,6 +316,11 @@ export interface ReviewComposerDecisionPacket {
  */
 export type ExecutionRequest = (ExecutionRequestBase & {
     mode?: "live";
+    tested_byok?: {
+        model_deployment_id: string;
+        provider_usage_budget_usd: number;
+        price_approval_sha256: string;
+    };
     verifier_id?: string;
     routing?: {
         required_arm_id: string;
@@ -952,7 +957,40 @@ export interface ModelAttemptProvenance {
         attestation: "source_response" | "gateway_response";
     } | null;
 }
+export interface TestedByokCommercialTerms {
+    pricing_revision: string;
+    millwork_fee_usd: number;
+    provider_usage_billed_by: "provider";
+    provider_invoice_authoritative: true;
+    support_owner: {
+        provider: "provider_account_credentials_usage_and_model_behavior";
+        millwork: "governed_service_and_millwork_fee";
+    };
+}
+export interface TestedByokQuote extends TestedByokCommercialTerms {
+    schema_version: "tested-byok-quote/v1";
+    model_deployment_id: string;
+    identity: {
+        source_id: string;
+        served_variant_id: string;
+        protocol_profile: SourceProtocolProfile;
+        auth_scheme: SourceAuthScheme;
+        location: string;
+        route: string;
+    };
+    pricing_basis: "source_reported" | "estimated";
+    provider_usage_budget_usd: number;
+    maximum_combined_usd: number;
+    price_approval_sha256: string;
+    fee_policy: {
+        charged_when: "accepted";
+        customer_cancel: "retained";
+        eligible_platform_failure_before_any_attempt: "automatically_reversed";
+        failure_after_attempt_started: "retained";
+    };
+}
 export interface ModelCatalogEntry {
+    tested_byok_access?: TestedByokCommercialTerms;
     model: ModelDefinition;
     source: {
         source_id: string;
@@ -988,6 +1026,7 @@ export interface ModelCatalogEntry {
     };
 }
 export interface ModelCatalog {
+    tested_byok_access?: TestedByokCommercialTerms;
     catalog_policy: "curated_tested_connection_filtered";
     models: ModelCatalogEntry[];
 }

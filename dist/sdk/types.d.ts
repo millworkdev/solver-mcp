@@ -1198,7 +1198,7 @@ export interface Account {
         funded_state: "funded" | "sandbox";
         manage_available: boolean;
         checkout_available?: boolean;
-        payment_unavailable_reason?: "not_configured" | "mode_unverified" | "pilot_not_admitted" | "admission_unavailable" | null;
+        payment_unavailable_reason?: "not_configured" | "mode_unverified" | "pilot_not_admitted" | "admission_unavailable" | "spending_paused" | "wallet_frozen" | null;
         platform_fee_usd_per_execution?: number;
         review_composer_fee_usd_per_execution?: number;
     } | null;

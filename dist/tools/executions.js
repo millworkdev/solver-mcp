@@ -79,6 +79,14 @@ export const submitTool = {
                 },
             },
             compose: { enum: ["auto"], default: "auto" },
+            tested_byok: {
+                type: "object", additionalProperties: false,
+                required: ["model_deployment_id", "provider_usage_budget_usd", "price_approval_sha256"],
+                description: "The exact tested customer-provider quote already reviewed. The tool checks funding and current price before requesting host approval. This API key can spend; this field cannot authorize spending.",
+                properties: { model_deployment_id: { type: "string", minLength: 1 },
+                    provider_usage_budget_usd: { type: "number", exclusiveMinimum: 0 },
+                    price_approval_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" } },
+            },
             idempotency_key: {
                 type: "string",
                 description: "A unique request key for this submission. Reuse it only for the same request after an uncertain response.",

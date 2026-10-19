@@ -3,9 +3,13 @@ import type { SolverBackendClient } from "./httpClient.js";
 import type { Execution, ExecutionRequest } from "./types.js";
 interface AccountProjection {
     tenant_id?: unknown;
+    balance?: {
+        balance_usd?: unknown;
+    } | null;
     billing?: {
         platform_fee_usd_per_execution?: unknown;
         review_composer_fee_usd_per_execution?: unknown;
+        payment_unavailable_reason?: unknown;
     } | null;
 }
 interface ModelCatalog {

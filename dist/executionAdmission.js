@@ -1,4 +1,4 @@
-import { hostOneRunApprovalRequest, previewRunRequest, readHostOneRunApproval, RunAdmissionError, RunAdmissionStore, } from "#solver-run-admission";
+import { hostOneRunApprovalRequest, previewRunRequest, readHostOneRunApproval, RunAdmissionError, RunAdmissionStore, assertTestedByokFunding, testedByokRunConsent, TestedByokPrecheckError, } from "#solver-run-admission";
 import { resolveRunAuthorizationBoundary, unsupportedRunBoundaryReport, } from "#solver-run-authorization-boundary";
 import { SolverApiError } from "./errors.js";
 const AUTHORITATIVE_NO_ACCEPT_PROBLEMS = new Set([
@@ -174,11 +174,56 @@ export async function submitWithRunAdmission(input) {
             ? Promise.resolve({ models: [] })
             : input.backend.request({ method: "GET", path: "model-catalog" }),
     ]);
-    const { preview, costReview } = deriveRunAdmissionFacts({ account, arm, catalog, request: input.request });
     const admission = new RunAdmissionStore({ boundary: resolution.boundary });
+    const originalFacts = deriveRunAdmissionFacts({ account, arm, catalog, request: input.request });
+    const recovered = await admission.recoverAccepted({ context: {
+            account_id: originalFacts.preview.account_id, request: input.request,
+            arm_id: originalFacts.preview.arm_id, provider_id: originalFacts.preview.provider_id,
+            access_lane: originalFacts.preview.access_lane, platform_fee_usd: originalFacts.preview.platform_fee_usd,
+        }, replayKey: input.replayKey });
+    if (recovered?.grant.execution_id) {
+        try {
+            return await input.backend.request({ method: "GET",
+                path: `executions/${encodeURIComponent(recovered.grant.execution_id)}` });
+        }
+        catch {
+            throw new RunAdmissionActionRequired(recoveryDocument({ preview: recovered.preview,
+                replayKey: input.replayKey, grant: recovered.grant,
+                detail: "The admitted execution could not be inspected. Its outcome is unknown; no new run was authorized." }));
+        }
+    }
+    let request = input.request;
+    let quote;
+    const model = modelForArm(catalog, arm);
+    if (!request.review_composer && model?.connection?.access_lane === "byok" && model.tested_byok_access) {
+        const deploymentId = nonEmptyString(model.deployment?.model_deployment_id);
+        quote = await input.backend.request({
+            method: "POST", path: "model-catalog/quote", body: { model_deployment_id: deploymentId,
+                provider_usage_budget_usd: request.policy.budget.max_cost_usd }
+        });
+        const currentConsent = testedByokRunConsent({ ...request, tested_byok: undefined }, deploymentId, quote);
+        request = { ...request, tested_byok: input.request.tested_byok ?? currentConsent };
+        if (account.billing?.platform_fee_usd_per_execution !== quote.millwork_fee_usd) {
+            throw new TestedByokPrecheckError("quote_unavailable", "The account fee and quote disagree. Refresh both before requesting approval.");
+        }
+    }
+    else if (request.tested_byok) {
+        throw new TestedByokPrecheckError("quote_unavailable", "This saved model no longer has an eligible tested customer-provider quote.");
+    }
+    const precheckFunding = () => {
+        if (quote) {
+            testedByokRunConsent(request, quote.model_deployment_id, quote);
+            assertTestedByokFunding(account, quote.millwork_fee_usd);
+        }
+    };
+    const { preview, costReview } = deriveRunAdmissionFacts({ account, arm, catalog, request });
+    if (quote) {
+        costReview.tested_byok_quote = quote;
+        costReview.spending_authority = "This API key can spend using its existing tested customer-provider authority. The quote grants no new authority; host run approval is still required.";
+    }
     let grant;
     try {
-        grant = await admission.admit({ preview, replayKey: input.replayKey });
+        grant = await admission.admit({ preview, replayKey: input.replayKey, beforeNewReservation: precheckFunding });
     }
     catch (error) {
         if (!(error instanceof RunAdmissionError) || !HOST_APPROVAL_REFUSALS.has(error.code))
@@ -190,6 +235,12 @@ export async function submitWithRunAdmission(input) {
         catch (approvalError) {
             if (!(approvalError instanceof RunAdmissionError))
                 throw approvalError;
+            // A stale quote is still the actionable refusal when an old approval
+            // also names another replay key. This can only refuse; valid accepted
+            // recovery reaches admit() and inspects without a fresh-price gate.
+            if (approvalError.code === "approval_request_mismatch" && quote) {
+                testedByokRunConsent(request, quote.model_deployment_id, quote);
+            }
             const state = approvalError.code === "approval_expired"
                 ? "expired"
                 : approvalError.code === "admission_storage_unavailable"
@@ -212,6 +263,7 @@ export async function submitWithRunAdmission(input) {
             });
         }
         if (!approval) {
+            precheckFunding();
             throw new RunAdmissionActionRequired({
                 state: "action_required",
                 refusal_code: "host_approval_required",
@@ -224,12 +276,13 @@ export async function submitWithRunAdmission(input) {
                 host_approval: hostOneRunApprovalRequest(resolution.boundary, preview, input.replayKey),
                 next_action: {
                     type: "obtain_host_one_run_approval",
-                    detail: "Ask the host administrator to create host_approval.approval_file using host_approval.document, then call solver_submit again with the exact same arguments and idempotency_key.",
+                    detail: "Ask the host administrator to create host_approval.approval_file using host_approval.document, then call solver_submit with the same request and idempotency_key, including request_preview.tested_byok when present so the exact approved price stays bound.",
                 },
             });
         }
         try {
-            grant = await admission.admit({ preview, replayKey: input.replayKey, oneRunApproval: approval });
+            grant = await admission.admit({ preview, replayKey: input.replayKey, oneRunApproval: approval,
+                beforeNewReservation: precheckFunding });
         }
         catch (approvedError) {
             if (!(approvedError instanceof RunAdmissionError))
@@ -272,7 +325,7 @@ export async function submitWithRunAdmission(input) {
         execution = await input.backend.request({
             method: "POST",
             path: "executions",
-            body: input.request,
+            body: request,
             idempotencyKey: input.replayKey,
         });
     }

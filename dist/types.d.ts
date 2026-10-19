@@ -46,6 +46,11 @@ export interface ExecutionRequest {
         required_arm_id: string;
     };
     compose?: "auto";
+    tested_byok?: {
+        model_deployment_id: string;
+        provider_usage_budget_usd: number;
+        price_approval_sha256: string;
+    };
     review_composer?: {
         version: "v1";
         repository: string;

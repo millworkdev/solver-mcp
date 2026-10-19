@@ -18,6 +18,7 @@ export interface ProblemBody {
     instance: string;
     errors?: FieldError[];
     retry_after_s?: number;
+    reason?: "agreement_terminated" | "agreement_recovery_required" | "price_changed";
 }
 /**
  * Thrown for every non-2xx backend response. Carries the parsed Problem body

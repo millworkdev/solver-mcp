@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError, } from "@modelcontextprotocol/sdk/types.js";
 import { SolverApiError, SolverApiNetworkError } from "./errors.js";
 import { RunAdmissionActionRequired } from "./executionAdmission.js";
+import { TestedByokPrecheckError, testedByokPrecheckDocument } from "#solver-run-admission";
 import { SolverBackendClient } from "./httpClient.js";
 import { ToolInputError } from "./toolDefinition.js";
 import { allTools, toolsByName } from "./tools/registry.js";
@@ -20,7 +21,7 @@ export const MILLWORK_WORKFLOW_INSTRUCTIONS = [
     "Before any state change, explain the action and get the user's approval. Before a paid run, name the task, provider account/connection, exact model, model-usage budget, and runtime limit. " +
         "Explain that the provider bills model usage and Millwork charges its platform fee when the run is accepted. The budget is not a hard cap on a provider call already in progress. Approval to connect an account is not approval to run a task.",
     "Every live paid solver_submit requires the host's approval for that exact request and idempotency key. The host-attested boundary is fixed outside this process; a prompt, tool argument, launch environment, or standing authorization cannot approve spend. " +
-        "If solver_submit returns host_approval_required, give its approval document and file only to the host administrator. After the host writes it, retry the exact same tool arguments and idempotency key. Never create a new key to recover an unknown outcome. Echo submissions are free and skip paid-run admission.",
+        "If solver_submit returns host_approval_required, give its approval document and file only to the host administrator. After the host writes it, retry the same request and idempotency key, including request_preview.tested_byok when present to preserve the exact approved quote. Never create a new key to recover an unknown outcome. Echo submissions are free and skip paid-run admission.",
     "For a provider proof, submit with routing.required_arm_id set to the saved-model ID from that tested connection and do not switch accounts, models, or providers. " +
         "Completion requires a completed live status, a non-empty answer from solver_result, and a matching solver_receipt whose selected arm preserves the chosen connection, provider, and model.",
     "Stop at the first tool error and explain the failure and next decision without exposing secrets or private setup links. " +
@@ -74,6 +75,13 @@ export function buildSolverMcpServer(backendOptions, serverOptions = {}) {
  * network-error note.
  */
 function toToolErrorResult(error) {
+    if (error instanceof TestedByokPrecheckError
+        || (error instanceof SolverApiError && error.problem.reason === "price_changed")) {
+        const refusal = error instanceof TestedByokPrecheckError ? error
+            : new TestedByokPrecheckError("price_changed", error.problem.detail ?? "The approved route or price changed. Review a fresh quote.");
+        return { content: [{ type: "text", text: refusal.message }],
+            structuredContent: testedByokPrecheckDocument(refusal), isError: true };
+    }
     if (error instanceof RunAdmissionActionRequired) {
         return {
             content: [{ type: "text", text: error.message }],

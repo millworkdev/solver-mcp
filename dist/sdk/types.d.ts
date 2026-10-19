@@ -331,6 +331,7 @@ export type ExecutionRequest = (ExecutionRequestBase & {
     review_composer: ReviewComposerRequest;
     verifier_id?: never;
     routing?: never;
+    tested_byok?: never;
 }) | (ExecutionRequestBase & {
     mode: "echo";
     verifier_id?: never;
@@ -338,6 +339,7 @@ export type ExecutionRequest = (ExecutionRequestBase & {
         required_arm_id: string;
     };
     review_composer?: never;
+    tested_byok?: never;
 });
 export type TenantTemplateId = "starter" | "pooled-open-model" | "byok-open-model";
 export interface TenantTemplatePlan {
@@ -498,6 +500,7 @@ export interface Execution {
     [extra: string]: unknown;
 }
 export interface LifecycleEvent {
+    candidate_skipped?: ReceiptCandidateSkip;
     verification_check?: VerificationCheck;
     recorded_check?: ReceiptRecordedCheck;
     event_id: string;
@@ -554,6 +557,12 @@ export interface ReceiptSliceVerifier {
     correctness_declaration?: ReceiptCorrectnessDeclaration;
     [extra: string]: unknown;
 }
+export interface ReceiptCandidateSkip {
+    arm_id: string;
+    attempt: number;
+    candidate_index: number;
+    reason: "arm_not_ready" | "tested_byok_prior_outcome_unknown" | "tested_byok_route_unavailable" | "tested_byok_quote_changed" | "tested_byok_bound_unavailable" | "tested_byok_budget_exceeded" | "managed_pool_consent_mismatch" | "managed_pool_runtime_unavailable" | "managed_pool_quote_unavailable" | "managed_pool_dispatch_not_admitted" | "route_suspended" | "continuity_prior_attempt_outcome_unknown" | "continuity_not_admitted" | "source_not_admitted" | "runtime_exceeded" | "cost_budget_exhausted" | "verifier_unavailable" | "verifier_binding_changed";
+}
 export interface ReceiptSlice {
     slice_id: string;
     capability: string;
@@ -561,6 +570,7 @@ export interface ReceiptSlice {
     verification_checks?: VerificationCheck[];
     recorded_check?: ReceiptRecordedCheck;
     acted_on_eval?: ReceiptActedOnEval;
+    skipped_candidates?: ReceiptCandidateSkip[];
     [extra: string]: unknown;
 }
 export interface ReceiptActedOnEval {
@@ -634,7 +644,43 @@ export type ReceiptRecordedCheck = ({
     /** When this fact was recorded, rather than when the receipt was retrieved. */
     recorded_at: string;
 };
-export interface Receipt {
+export interface ReceiptFeeCharges {
+    currency: "USD";
+    debited_microusd: number;
+    reversed_microusd: number;
+    net_microusd: number;
+    /** Spendable balance at the last recorded fee operation, not a later account read. */
+    balance_after_microusd: number | null;
+    balance_recorded_at: string | null;
+}
+export interface ReceiptAcceptedCharge {
+    request_id: string;
+    quote_id: string;
+    quote_sha256: string;
+    tariff: {
+        id: string;
+        revision: string;
+        sha256: string;
+    };
+    terms: {
+        version_id: string;
+        source_sha256: string;
+    };
+    mode: "test";
+    currency: "USD";
+    usage: {
+        input_tokens: number | null;
+        output_tokens: number | null;
+    };
+    provider_cost_microusd: number | null;
+    fee_microusd: number;
+    total_microusd: number | null;
+}
+export interface ReceiptChargeDetails {
+    fee_charges?: ReceiptFeeCharges;
+    accepted_charge?: ReceiptAcceptedCharge;
+}
+export interface Receipt extends ReceiptChargeDetails {
     execution_id: string;
     slices?: ReceiptSlice[];
     totals?: ReceiptTotals;
@@ -707,13 +753,13 @@ export interface Usage {
         }>;
     }>;
 }
-export type ComplianceDecisionKind = "proposal_decision" | "execution_cancellation" | "api_key_revocation" | "registry_action";
+export type ComplianceDecisionKind = "proposal_decision" | "execution_cancellation" | "api_key_revocation" | "scoped_key_revocation" | "registry_action";
 export interface ComplianceDecisionLogEntry {
     decision_id: string;
     kind: ComplianceDecisionKind;
     action: string;
     resource: {
-        type: "proposal" | "execution" | "api_key" | "arm" | "verifier";
+        type: "proposal" | "execution" | "api_key" | "provider_scoped_key" | "arm" | "verifier";
         id: string;
     };
     acted_by: string | null;

@@ -1,4 +1,4 @@
-import { type RunRequestPreview } from "#solver-run-admission";
+import { inventoryRunConsent, type RunRequestPreview } from "#solver-run-admission";
 import type { SolverBackendClient } from "./httpClient.js";
 import type { Execution, ExecutionRequest } from "./types.js";
 interface AccountProjection {
@@ -20,6 +20,8 @@ interface SelectedArm {
     kind?: unknown;
     status?: unknown;
     model_deployment_id?: unknown;
+    route_authority_id?: unknown;
+    route_authority?: Parameters<typeof inventoryRunConsent>[1];
 }
 export declare class RunAdmissionActionRequired extends Error {
     readonly document: Record<string, unknown>;
@@ -41,7 +43,6 @@ export declare function submitWithRunAdmission(input: {
 }): Promise<Execution>;
 export declare function settleRunAdmissionFromReceipt(input: {
     executionId: string;
-    chargedUsd: number;
     receipt: unknown;
 }): Promise<void>;
 export {};

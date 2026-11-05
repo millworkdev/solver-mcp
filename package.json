@@ -1,6 +1,6 @@
 {
   "name": "@millwork/solver-mcp",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "Millwork Solver execution MCP server -- the solver_* tools over stdio.",
   "keywords": [
     "mcp",
@@ -24,16 +24,23 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "solver-mcp": "./dist/index.js"
+    "solver-mcp": "./dist/index.js",
+    "solver-provider-mcp": "./dist/providerIndex.js"
   },
   "imports": {
     "#solver-run-admission": "./dist/sdk/runAdmission.js",
-    "#solver-run-authorization-boundary": "./dist/sdk/runAuthorizationBoundary.js"
+    "#solver-run-authorization-boundary": "./dist/sdk/runAuthorizationBoundary.js",
+    "#provider-feed-validator": "./dist/provider-validator/providerValidator.js",
+    "#provider-validation-context": "./dist/provider-validator/providerValidationContext.js"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./provider": {
+      "types": "./dist/providerServer.d.ts",
+      "import": "./dist/providerServer.js"
     }
   },
   "files": [
@@ -46,6 +53,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "ajv": "^8.17.1"
   }
 }

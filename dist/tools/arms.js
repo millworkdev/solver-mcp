@@ -1,4 +1,4 @@
-import { assertRequiredPresent } from "../toolDefinition.js";
+import { assertRequiredPresent, ToolInputError } from "../toolDefinition.js";
 /**
  * The two arm tools that are fully functional today against the live
  * backend (arms CRUD is live). Both map 1:1 to a the product contract §3
@@ -113,15 +113,19 @@ export const listArmsTool = {
  */
 export const enableModelArmTool = {
     name: "solver_enable_model_arm",
-    description: "Save the exact catalog model the user chose from the just-tested provider connection (POST /v1/arms with kind=model and model_deployment_id). " +
-        "Read solver_list_model_catalog, confirm the exact route, and pass only policy values contained by its current arm_registration_template; kind=model is supplied here. " +
+    description: "Save the exact model route the user chose (POST /v1/arms with kind=model and its returned route binding). " +
+        "For a tested catalog route, read solver_list_model_catalog. For an account inventory route, obtain and read the original route permission, then pass its exact arm_registration_template including route_authority_id. Permission does not assert testing or approve a paid run. " +
+        "Pass only policy values contained by that current template; kind=model is supplied here. " +
         "idempotency_key is required for same-principal, same-request retries and is sent as the HTTP Idempotency-Key header, never in the body. Keep the route identity with the returned arm_id and pass the arm_id as solver_submit routing.required_arm_id.",
     inputSchema: {
         type: "object",
-        required: ["model_deployment_id", "display_name", "capability_tags", "data_class_grants", "cost_class", "idempotency_key"],
+        required: ["display_name", "capability_tags", "data_class_grants", "cost_class", "idempotency_key"],
+        oneOf: [{ required: ["model_deployment_id"], not: { required: ["route_authority_id"] } },
+            { required: ["route_authority_id"], not: { required: ["model_deployment_id"] } }],
         additionalProperties: false,
         properties: {
-            model_deployment_id: { type: "string", description: "Exact catalog model deployment chosen by the user after matching its connection_id to the just-tested provider connection." },
+            model_deployment_id: { type: "string", description: "For a tested catalog route: exact deployment from its returned registration template. Inventory templates use route_authority_id instead." },
+            route_authority_id: { type: "string", minLength: 1, description: "For an inventory route only: exact immutable authority ID from the returned registration template." },
             display_name: { type: "string" },
             capability_tags: { type: "array", items: { type: "string" } },
             data_class_grants: { type: "array", items: { type: "string", enum: ["public", "sandbox", "tenant_internal"] } },
@@ -136,6 +140,10 @@ export const enableModelArmTool = {
     async handler(args, context) {
         assertRequiredPresent("solver_enable_model_arm", enableModelArmTool.inputSchema, args);
         const { idempotency_key, ...registration } = args;
+        const hasDeployment = typeof registration.model_deployment_id === "string" && registration.model_deployment_id.trim().length > 0;
+        const hasAuthority = typeof registration.route_authority_id === "string" && registration.route_authority_id.trim().length > 0;
+        if (hasDeployment === hasAuthority)
+            throw new ToolInputError("solver_enable_model_arm: pass the exact returned template's deployment or route_authority_id, never both or neither.");
         return context.backend.request({
             method: "POST",
             path: "arms",

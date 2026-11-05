@@ -36,7 +36,7 @@ const policySchema = {
             type: "object",
             required: ["max_cost_usd", "max_runtime_s"],
             properties: {
-                max_cost_usd: { type: "number", exclusiveMinimum: 0 },
+                max_cost_usd: { type: "number", minimum: 0 },
                 max_runtime_s: { type: "integer", minimum: 1 },
             },
         },
@@ -61,6 +61,9 @@ export const submitTool = {
     inputSchema: {
         type: "object",
         required: ["task", "policy", "idempotency_key"],
+        allOf: [{ if: { required: ["byok_inventory"] }, else: {
+                    properties: { policy: { properties: { budget: { properties: { max_cost_usd: { exclusiveMinimum: 0 } } } } } },
+                } }],
         properties: {
             task: taskSchema,
             policy: policySchema,
@@ -87,6 +90,32 @@ export const submitTool = {
                     provider_usage_budget_usd: { type: "number", exclusiveMinimum: 0 },
                     price_approval_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" } },
             },
+            byok_inventory: {
+                type: "object", additionalProperties: false,
+                required: ["authority_id", "plan_token", "plan_digest", "original_inputs", "provider_usage_budget_usd", "price_approval_sha256"],
+                description: "The original reviewed execute plan and quote for the exact saved route permission. This is not host spending approval; retain it unchanged for recovery.",
+                properties: {
+                    authority_id: { type: "string", minLength: 1 },
+                    plan_token: { type: "string", minLength: 1,
+                        description: "The server's bounded signed plan token containing no credential material, custody handle or objective plaintext." },
+                    plan_digest: { type: "string", minLength: 1 },
+                    original_inputs: { type: "object", additionalProperties: false,
+                        required: ["item_id", "route_id", "observation_revision", "purpose", "task", "authority_id"],
+                        properties: { item_id: { type: "string", minLength: 1 }, route_id: { type: "string", minLength: 1 },
+                            observation_revision: { type: "string", minLength: 1 }, purpose: { const: "execute" },
+                            task: { type: "object", additionalProperties: false, required: ["objective"],
+                                properties: { objective: { type: "string", maxLength: 4000 } } },
+                            authority_id: { type: "string", minLength: 1 },
+                            task_envelope: { type: "object", additionalProperties: false,
+                                required: ["max_input_tokens", "max_output_tokens", "max_runtime_s", "data_classes"],
+                                properties: { max_input_tokens: { type: "integer", minimum: 1 }, max_output_tokens: { type: "integer", minimum: 1 }, max_reasoning_tokens: { type: "integer", minimum: 1 },
+                                    max_runtime_s: { type: "integer", minimum: 1 },
+                                    data_classes: { type: "array", items: { enum: ["public", "sandbox", "tenant_internal"] } } } },
+                        } },
+                    provider_usage_budget_usd: { type: "number", minimum: 0 },
+                    price_approval_sha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+                },
+            },
             idempotency_key: {
                 type: "string",
                 description: "A unique request key for this submission. Reuse it only for the same request after an uncertain response.",
@@ -98,6 +127,9 @@ export const submitTool = {
         const { idempotency_key: idempotencyKey, ...body } = args;
         if (typeof idempotencyKey !== "string" || idempotencyKey.trim().length === 0) {
             throw new ToolInputError('solver_submit: "idempotency_key" must be a non-empty caller-owned value.');
+        }
+        if (body.byok_inventory && (body.tested_byok || body.mode === "echo" || body.verifier_id)) {
+            throw new ToolInputError("solver_submit: inventory consent requires the built-in live check and cannot be combined with tested customer-provider consent.");
         }
         const echoSelected = body.mode === "echo";
         const omittedVerifier = typeof body.verifier_id !== "string" || body.verifier_id.trim().length === 0;

@@ -1,4 +1,4 @@
-import { hostOneRunApprovalRequest, previewRunRequest, readHostOneRunApproval, RunAdmissionError, RunAdmissionStore, assertTestedByokFunding, testedByokRunConsent, TestedByokPrecheckError, } from "#solver-run-admission";
+import { hostOneRunApprovalRequest, previewRunRequest, readHostOneRunApproval, RunAdmissionError, RunAdmissionStore, assertTestedByokFunding, testedByokRunConsent, inventoryRunConsent, settledReceiptCharge, TestedByokPrecheckError, } from "#solver-run-admission";
 import { resolveRunAuthorizationBoundary, unsupportedRunBoundaryReport, } from "#solver-run-authorization-boundary";
 import { SolverApiError } from "./errors.js";
 const AUTHORITATIVE_NO_ACCEPT_PROBLEMS = new Set([
@@ -77,6 +77,29 @@ export function deriveRunAdmissionFacts(input) {
                 budget_note: "An already-started agent attempt may exceed its usage threshold.",
             },
         };
+    }
+    const authority = input.arm.route_authority;
+    if (input.arm.route_authority_id || authority) {
+        if (!accountId || !armId || !authority || authority.authority_id !== input.arm.route_authority_id
+            || authority.model_deployment_id !== input.arm.model_deployment_id || !nonEmptyString(authority.source_id)) {
+            throw new RunAdmissionActionRequired({ state: "action_required", refusal_code: "run_preview_unavailable",
+                detail: "The saved arm's immutable inventory permission could not be verified. No paid run was submitted.",
+                next_action: { type: "recover_route_authority", detail: "Read the saved arm and original route permission again; keep their exact identities." } });
+        }
+        const fee = input.account.billing?.platform_fee_usd_per_execution;
+        const platformFee = typeof fee === "number" && Number.isFinite(fee) && fee >= 0 ? fee : null;
+        const preview = previewRunRequest({ account_id: accountId,
+            request: input.request, arm_id: armId,
+            provider_id: authority.source_id, access_lane: "byok", platform_fee_usd: platformFee });
+        return { preview, costReview: { arm_id: armId, source_id: authority.source_id,
+                connection_id: authority.connection_id, model_deployment_id: authority.model_deployment_id,
+                authority_id: authority.authority_id, authority_revision: authority.authority_revision,
+                route_id: authority.route_id, observation_revision: authority.observation_revision,
+                testing: "not_asserted_by_permission", access_lane: "byok", data_classes: [...input.request.policy.data_classes],
+                max_runtime_s: input.request.policy.budget.max_runtime_s, platform_fee_usd: platformFee,
+                model_budget_usd: input.request.policy.budget.max_cost_usd, model_usage_payer: "customer_provider_account",
+                combined_allowance_usd: preview.declared_maximum_usd,
+                budget_note: "Review the complete computed provider bound and exact task quote; permission alone does not approve this paid run." } };
     }
     const model = modelForArm(input.catalog, input.arm);
     const providerId = nonEmptyString(model?.source?.source_id);
@@ -167,20 +190,19 @@ export async function submitWithRunAdmission(input) {
             },
         });
     }
-    const [account, arm, catalog] = await Promise.all([
+    const [account, arm] = await Promise.all([
         input.backend.request({ method: "GET", path: "account" }),
         input.backend.request({ method: "GET", path: `arms/${encodeURIComponent(armId)}` }),
-        input.request.review_composer
-            ? Promise.resolve({ models: [] })
-            : input.backend.request({ method: "GET", path: "model-catalog" }),
     ]);
+    const catalog = input.request.review_composer || arm.route_authority_id
+        ? { models: [] } : await input.backend.request({ method: "GET", path: "model-catalog" });
     const admission = new RunAdmissionStore({ boundary: resolution.boundary });
     const originalFacts = deriveRunAdmissionFacts({ account, arm, catalog, request: input.request });
     const recovered = await admission.recoverAccepted({ context: {
             account_id: originalFacts.preview.account_id, request: input.request,
             arm_id: originalFacts.preview.arm_id, provider_id: originalFacts.preview.provider_id,
             access_lane: originalFacts.preview.access_lane, platform_fee_usd: originalFacts.preview.platform_fee_usd,
-        }, replayKey: input.replayKey });
+        }, replayKey: input.replayKey, recoverUncertain: true });
     if (recovered?.grant.execution_id) {
         try {
             return await input.backend.request({ method: "GET",
@@ -194,36 +216,66 @@ export async function submitWithRunAdmission(input) {
     }
     let request = input.request;
     let quote;
+    let inventoryQuote;
     const model = modelForArm(catalog, arm);
-    if (!request.review_composer && model?.connection?.access_lane === "byok" && model.tested_byok_access) {
-        const deploymentId = nonEmptyString(model.deployment?.model_deployment_id);
-        quote = await input.backend.request({
-            method: "POST", path: "model-catalog/quote", body: { model_deployment_id: deploymentId,
-                provider_usage_budget_usd: request.policy.budget.max_cost_usd }
-        });
-        const currentConsent = testedByokRunConsent({ ...request, tested_byok: undefined }, deploymentId, quote);
-        request = { ...request, tested_byok: input.request.tested_byok ?? currentConsent };
-        if (account.billing?.platform_fee_usd_per_execution !== quote.millwork_fee_usd) {
-            throw new TestedByokPrecheckError("quote_unavailable", "The account fee and quote disagree. Refresh both before requesting approval.");
+    if (!recovered) {
+        if (arm.route_authority_id) {
+            if (!request.byok_inventory || !arm.route_authority)
+                throw new TestedByokPrecheckError("quote_unavailable", "Supply the original reviewed execute plan and inventory quote for this exact saved permission; no automatic plan or paid run was started.");
+            inventoryQuote = await input.backend.request({ method: "POST",
+                path: "model-inventory/quote", body: { authority_id: request.byok_inventory.authority_id,
+                    plan_token: request.byok_inventory.plan_token, plan_digest: request.byok_inventory.plan_digest,
+                    original_inputs: request.byok_inventory.original_inputs,
+                    provider_usage_budget_usd: request.byok_inventory.provider_usage_budget_usd } });
+            inventoryRunConsent(request, arm.route_authority, inventoryQuote);
+            if (account.billing?.platform_fee_usd_per_execution !== inventoryQuote.millwork_fee_usd) {
+                throw new TestedByokPrecheckError("quote_unavailable", "The account fee and inventory quote disagree. Refresh both before requesting approval.");
+            }
+        }
+        else if (request.byok_inventory) {
+            throw new TestedByokPrecheckError("quote_unavailable", "The selected saved arm does not carry the reviewed inventory permission.");
+        }
+        else if (!request.review_composer && model?.connection?.access_lane === "byok" && model.tested_byok_access) {
+            const deploymentId = nonEmptyString(model.deployment?.model_deployment_id);
+            quote = await input.backend.request({
+                method: "POST", path: "model-catalog/quote", body: { model_deployment_id: deploymentId,
+                    provider_usage_budget_usd: request.policy.budget.max_cost_usd }
+            });
+            const currentConsent = testedByokRunConsent({ ...request, tested_byok: undefined }, deploymentId, quote);
+            request = { ...request, tested_byok: input.request.tested_byok ?? currentConsent };
+            if (account.billing?.platform_fee_usd_per_execution !== quote.millwork_fee_usd) {
+                throw new TestedByokPrecheckError("quote_unavailable", "The account fee and quote disagree. Refresh both before requesting approval.");
+            }
+        }
+        else if (request.tested_byok) {
+            throw new TestedByokPrecheckError("quote_unavailable", "This saved model no longer has an eligible tested customer-provider quote.");
         }
     }
-    else if (request.tested_byok) {
-        throw new TestedByokPrecheckError("quote_unavailable", "This saved model no longer has an eligible tested customer-provider quote.");
-    }
     const precheckFunding = () => {
+        if (inventoryQuote && arm.route_authority) {
+            inventoryRunConsent(request, arm.route_authority, inventoryQuote);
+            assertTestedByokFunding(account, inventoryQuote.millwork_fee_usd);
+        }
         if (quote) {
             testedByokRunConsent(request, quote.model_deployment_id, quote);
             assertTestedByokFunding(account, quote.millwork_fee_usd);
         }
     };
-    const { preview, costReview } = deriveRunAdmissionFacts({ account, arm, catalog, request });
+    const facts = deriveRunAdmissionFacts({ account, arm, catalog, request });
+    const preview = recovered?.preview ?? facts.preview;
+    const costReview = recovered ? { ...facts.costReview, platform_fee_usd: preview.platform_fee_usd,
+        combined_allowance_usd: preview.declared_maximum_usd } : facts.costReview;
+    if (inventoryQuote) {
+        costReview.byok_inventory_quote = inventoryQuote;
+        costReview.spending_authority = "The original task plan, route permission and quote remain bound to this request. Host run approval is required.";
+    }
     if (quote) {
         costReview.tested_byok_quote = quote;
         costReview.spending_authority = "This API key can spend using its existing tested customer-provider authority. The quote grants no new authority; host run approval is still required.";
     }
     let grant;
     try {
-        grant = await admission.admit({ preview, replayKey: input.replayKey, beforeNewReservation: precheckFunding });
+        grant = recovered?.grant ?? await admission.admit({ preview, replayKey: input.replayKey, beforeNewReservation: precheckFunding });
     }
     catch (error) {
         if (!(error instanceof RunAdmissionError) || !HOST_APPROVAL_REFUSALS.has(error.code))
@@ -276,7 +328,7 @@ export async function submitWithRunAdmission(input) {
                 host_approval: hostOneRunApprovalRequest(resolution.boundary, preview, input.replayKey),
                 next_action: {
                     type: "obtain_host_one_run_approval",
-                    detail: "Ask the host administrator to create host_approval.approval_file using host_approval.document, then call solver_submit with the same request and idempotency_key, including request_preview.tested_byok when present so the exact approved price stays bound.",
+                    detail: "Ask the host administrator to create host_approval.approval_file using host_approval.document, then call solver_submit with the same request and idempotency_key, including request_preview.tested_byok or request_preview.byok_inventory when present so the original task plan and exact approved price stay bound.",
                 },
             });
         }
@@ -356,12 +408,17 @@ export async function submitWithRunAdmission(input) {
     return execution;
 }
 export async function settleRunAdmissionFromReceipt(input) {
+    // An inventory receipt may retain full exposure while known totals remain zero.
+    // Leave its accepted reservation intact until the original outcome is reconciled.
+    const authoritativeCharge = settledReceiptCharge(input.receipt);
+    if (authoritativeCharge === null)
+        return;
     const resolution = await resolveRunAuthorizationBoundary();
     if (!resolution.supported)
         return;
     try {
         const admission = new RunAdmissionStore({ boundary: resolution.boundary });
-        await admission.settleAcceptedExecution(input.executionId, input.chargedUsd);
+        await admission.settleAcceptedExecution(input.executionId, authoritativeCharge);
     }
     catch (error) {
         throw new RunAdmissionActionRequired({

@@ -1,3 +1,4 @@
+import type { inventoryRunConsent } from "#solver-run-admission";
 /**
  * Wire types for the objects this MCP server touches. These mirror the TypeScript
  * SDK's wire types exactly (same snake_case wire casing,
@@ -46,6 +47,7 @@ export interface ExecutionRequest {
         required_arm_id: string;
     };
     compose?: "auto";
+    byok_inventory?: ReturnType<typeof inventoryRunConsent>;
     tested_byok?: {
         model_deployment_id: string;
         provider_usage_budget_usd: number;
@@ -98,6 +100,9 @@ export interface Arm {
     cost_class?: CostClass;
     provider?: string;
     model_id?: string;
+    model_deployment_id?: string;
+    route_authority_id?: string;
+    route_authority?: Parameters<typeof inventoryRunConsent>[1];
     endpoint?: ArmEndpoint;
     lifecycle?: ArmLifecycle;
     artifact_hash?: string;
@@ -113,6 +118,8 @@ export interface ArmWrite {
     provider?: string;
     model_id?: string;
     credential_ref?: string;
+    model_deployment_id?: string;
+    route_authority_id?: string;
     endpoint?: ArmEndpoint;
     lifecycle?: ArmLifecycle;
     artifact?: ArmArtifact;

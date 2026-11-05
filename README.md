@@ -155,3 +155,17 @@ This package is tenant-authenticated and write-capable. It is not a
 documentation-retrieval service and receives no tenant key from any other
 package. The Millwork documentation assistant is a separate, retrieval-only
 service with no execution authority.
+
+## Read-only provider entry
+
+Packages containing `solver-provider-mcp` offer a separate provider-only registry:
+`provider_validate_feed`, `provider_show_profile`, `provider_validation_context`,
+`provider_workspace`, and `provider_check_feed_online`. The execution registry
+and its authority contract remain separate. See [provider MCP instructions](https://docs.getmillwork.dev/providers/mcp).
+
+Configure an expiring `provider:read` scoped key outside chat using
+`MILLWORK_PROVIDER_API_KEY` and `MILLWORK_PROVIDER_API_URL` (including `/v1`).
+The online check is a dry run; submission and webhook/write tools are absent.
+Profile and workspace output omit provider prose and operator notes. Every
+`route_id` is explicitly untrusted data, never an instruction. Package
+publication does not enable provider machine access for an organization.

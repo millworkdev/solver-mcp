@@ -16,9 +16,12 @@ const failures = [];
 // not public here. The allowlist therefore has no .map entries.
 const distFiles = [
   "errors", "executionAdmission", "httpClient", "index", "recordedCheckPresentation", "server", "toolDefinition", "types",
-  "sdk/runAdmission", "sdk/runAuthorizationBoundary", "sdk/types",
+  "sdk/runAdmission", "sdk/runAuthorizationBoundary", "sdk/types", "sdk/modelInventory",
   "tools/arms", "tools/executions", "tools/modelSources", "tools/proposals",
   "tools/receipts", "tools/registry", "tools/verifiers",
+  "providerIndex", "providerServer", "providerProjection", "provider-sdk/errors", "provider-sdk/httpClient",
+  "provider-sdk/provider/index", "provider-sdk/provider/webhookVerifier", "provider-validator/providerValidator", "provider-validator/providerMetadataPolicy",
+  "provider-validator/providerIncumbentCandidates", "provider-validator/providerValidationContext",
 ].flatMap((base) => [`dist/${base}.js`, `dist/${base}.d.ts`]);
 const allowedPackedFiles = ["LICENSE", "README.md", "package.json", ...distFiles].sort();
 
@@ -47,7 +50,7 @@ if (manifest.repository?.url !== "git+https://github.com/millworkdev/solver-mcp.
 if (JSON.stringify(manifest.files) !== JSON.stringify(["dist"])) {
   failures.push(`manifest files must be exactly ["dist"], got ${JSON.stringify(manifest.files)}`);
 }
-if (JSON.stringify(manifest.bin) !== JSON.stringify({ "solver-mcp": "./dist/index.js" })) {
+if (JSON.stringify(manifest.bin) !== JSON.stringify({ "solver-mcp": "./dist/index.js", "solver-provider-mcp": "./dist/providerIndex.js" })) {
   failures.push(`manifest bin drifted: ${JSON.stringify(manifest.bin)}`);
 }
 if (manifest.publishConfig?.access !== "public") failures.push("manifest publishConfig.access must be public");
